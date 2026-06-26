@@ -1,0 +1,21 @@
+{
+  "name": "bible-quiz",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "test:all": "npm run test:server && npm run test:client",
+    "test:server": "cd server && npm test",
+    "test:client": "cd client && npm test",
+    "test:coverage:all": "npm run test:coverage:server && npm run test:coverage:client",
+    "test:coverage:server": "cd server && npm run test:coverage",
+    "test:coverage:client": "cd client && npm run test:coverage",
+    "test:e2e": "cd client && npm run test:e2e"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

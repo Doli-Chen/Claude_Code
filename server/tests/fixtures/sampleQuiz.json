@@ -1,0 +1,36 @@
+{
+  "id": "test-quiz-id-001",
+  "title": "Test Bible Quiz",
+  "description": "Sample quiz for testing",
+  "defaultTimeLimit": 20,
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "questions": [
+    {
+      "id": "q-001",
+      "text": "Who wrote the book of Romans?",
+      "imageUrl": null,
+      "timeLimit": 20,
+      "options": [
+        { "index": 0, "text": "Peter" },
+        { "index": 1, "text": "Paul" },
+        { "index": 2, "text": "John" },
+        { "index": 3, "text": "James" }
+      ],
+      "correctIndex": 1
+    },
+    {
+      "id": "q-002",
+      "text": "How many books are in the New Testament?",
+      "imageUrl": null,
+      "timeLimit": 15,
+      "options": [
+        { "index": 0, "text": "24" },
+        { "index": 1, "text": "25" },
+        { "index": 2, "text": "27" },
+        { "index": 3, "text": "30" }
+      ],
+      "correctIndex": 2
+    }
+  ]
+}

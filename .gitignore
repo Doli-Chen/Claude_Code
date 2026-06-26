@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+uploads/
+*.env
+.env.local
+.env.production.local
+server/data/quizzes/*.json
+client/dist/
+client/coverage/
+client/node_modules/
+client/playwright-report/
+client/test-results/
+server/coverage/
+server/node_modules/

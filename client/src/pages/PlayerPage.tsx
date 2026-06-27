@@ -29,8 +29,8 @@ export default function PlayerPage() {
       }
       setJoinError(messages[code] ?? '加入失敗')
     })
-    socket.on('player:question_ready', ({ questionIndex, totalQuestions, timeLimit }) => {
-      store.setQuestionReady(questionIndex, totalQuestions, timeLimit)
+    socket.on('player:question_ready', ({ questionIndex, totalQuestions, timeLimit, question }) => {
+      store.setQuestionReady(questionIndex, totalQuestions, timeLimit, question)
     })
     socket.on('player:answering_start', () => {
       store.setState('ANSWERING')
@@ -74,7 +74,7 @@ export default function PlayerPage() {
     store.setState('ANSWERED')
   }
 
-  const { state, nickname, quizTitle, questionIndex, totalQuestions, lastResult, myRank, myScore, top5 } = store
+  const { state, nickname, quizTitle, questionIndex, totalQuestions, currentQuestion, lastResult, myRank, myScore, top5 } = store
 
   if (state === 'JOIN') {
     return <JoinForm initialCode={codeFromUrl} onJoin={handleJoin} error={joinError} />
@@ -82,8 +82,8 @@ export default function PlayerPage() {
   if (state === 'WAITING') {
     return <WaitingLobby nickname={nickname} quizTitle={quizTitle} />
   }
-  if (state === 'ANSWERING') {
-    return <AnswerPad questionIndex={questionIndex} totalQuestions={totalQuestions} onAnswer={handleAnswer} />
+  if (state === 'ANSWERING' && currentQuestion) {
+    return <AnswerPad question={currentQuestion} questionIndex={questionIndex} totalQuestions={totalQuestions} onAnswer={handleAnswer} />
   }
   if (state === 'ANSWERED') {
     return (

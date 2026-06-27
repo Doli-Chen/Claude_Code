@@ -49,6 +49,11 @@ function startQuestion(session, io) {
     questionIndex: session.currentQuestionIndex,
     totalQuestions: session.quiz.questions.length,
     timeLimit,
+    question: {
+      text: question.text,
+      imageUrl: question.imageUrl,
+      options: question.options,
+    },
   });
 
   beginAnswering(session, io);
@@ -98,6 +103,18 @@ function revealAnswer(session, io) {
   io.to(`host:${session.gameCode}`).emit('host:question_timeout', {
     questionIndex: session.currentQuestionIndex,
   });
+
+  for (const [socketId, player] of session.players) {
+    const answerRecord = player.answers.find(a => a.questionIndex === session.currentQuestionIndex);
+    if (answerRecord) {
+      io.to(socketId).emit('player:answer_result', {
+        correct: answerRecord.correct,
+        score: answerRecord.pointsEarned,
+        totalScore: player.score,
+        rank: session.getPlayerRank(socketId),
+      });
+    }
+  }
 }
 
 function showLeaderboard(session, io) {

@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev",
+    "dev:client": "wait-on tcp:3001 && cd client && npm run dev",
     "build": "cd client && npm run build",
     "start": "cd server && npm start",
     "test:all": "npm run test:server && npm run test:client",
@@ -16,6 +16,7 @@
     "test:e2e": "cd client && npm run test:e2e"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "wait-on": "^9.0.10"
   }
 }

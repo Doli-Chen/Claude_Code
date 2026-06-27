@@ -59,7 +59,7 @@ Routes / Socket handlers  →  Service layer  →  Repository layer  →  Data (
 - **Routes** (`src/routes/`): HTTP-only, thin wrappers that call `QuizService`
 - **Socket handlers** (`src/socket/`): Three files — `hostHandlers.js`, `playerHandlers.js`, `displayHandlers.js` — each registers events on one socket and delegates to `GameService`
 - **`QuizService`** (`src/services/QuizService.js`): Quiz CRUD business logic, validates questions (exactly 4 options, `correctIndex` 0–3, `timeLimit` from the allowed set)
-- **`GameService`** (`src/services/GameService.js`): Owns the game loop — `createSession`, `startQuestion`, `startTimer`, `revealAnswer`, `showLeaderboard`, `nextQuestion`, `endGame`. Stores all active sessions in a module-level `Map` (in-memory, lost on restart).
+- **`GameService`** (`src/services/GameService.js`): Owns the game loop — `createSession`, `startQuestion`, `startTimer`, `revealAnswer`, `showLeaderboard`, `nextQuestion`, `endGame`. Stores all active sessions in a module-level `Map` (in-memory, lost on restart). Note: `endGame` sets `session.state` directly instead of calling `transition()`, so it can be called from any state (intentional escape hatch for the host `end_game` event).
 - **`GameSession`** (`src/models/GameSession.js`): The state machine. Enforces valid transitions via `VALID_TRANSITIONS`. Scoring is server-authoritative: `Math.ceil((questionEndTime - Date.now()) / 1000)`, minimum 1 point.
 - **`QuizRepository`**: Reads/writes quiz JSON files from `server/data/quizzes/` (one file per quiz, named `{uuid}.json`).
 
@@ -75,15 +75,50 @@ Every socket joins rooms to scope broadcasts:
 
 Events are prefixed by receiver: `host:*`, `player:*`, `display:*`.
 
-### Frontend (`client/`)
+### Socket Event Contract
 
-React 18 + TypeScript + Vite. Five pages map to the five URL routes; each page owns a Zustand store.
+**Client → Server (emits):**
 
-- **Stores** (`src/store/`): `quizStore`, `hostStore`, `playerStore`, `displayStore` — one per role. Stores hold derived UI state only; the source of truth is the server.
-- **`socketService`** (`src/services/socketService.ts`): Single thin wrapper around the shared `socket.ts` singleton. All socket emits go through here; all socket listeners are registered in pages/components via `useSocketEvents`.
-- **`useSocketEvents`** (`src/hooks/useSocket.ts`): Registers/deregisters a map of `{ eventName: handler }` on mount/unmount. Every page that listens to socket events uses this hook.
-- **`quizApi` / `uploadApi`** (`src/services/`): REST calls via `fetch`. Mockable independently of socket logic.
-- **MSW** (`client/tests/mocks/`): Mock Service Worker handles REST API calls in frontend tests. Socket interactions are mocked directly.
+| Event | Payload | Handler |
+|-------|---------|---------|
+| `host:create_game` | `{ quizId }` | Creates session, host joins rooms |
+| `host:create_game_join` | `{ gameCode }` | Reconnects host to existing session (bypasses creation) |
+| `host:start_game` | `{ gameCode }` | Transitions LOBBY → QUESTION_INTRO |
+| `host:reveal_answer` | `{ gameCode }` | Clears timer, transitions ANSWERING → REVEALING_ANSWER |
+| `host:show_leaderboard` | `{ gameCode }` | Transitions REVEALING_ANSWER → LEADERBOARD |
+| `host:next_question` | `{ gameCode }` | Calls nextQuestion (→ QUESTION_INTRO or GAME_OVER) |
+| `host:end_game` | `{ gameCode }` | Forces GAME_OVER from any state |
+| `player:join` | `{ gameCode, nickname }` | Adds player, must be in LOBBY |
+| `player:submit_answer` | `{ gameCode, answerIndex, clientTimestamp }` | Records answer (only accepted in ANSWERING state) |
+| `display:register` | `{ gameCode }` | Joins display room; catches up to current state |
+
+**Server → Client (listeners):**
+
+| Event | Recipient | Payload summary |
+|-------|-----------|-----------------|
+| `host:game_created` | host | `{ gameCode, quizTitle, totalQuestions }` |
+| `host:player_joined` | host | `{ player, playerCount }` |
+| `host:player_left` | host | `{ playerId, playerCount }` |
+| `host:answer_progress` | host | `{ answered, total }` |
+| `host:question_timeout` | host | `{ questionIndex }` |
+| `host:error` | host | `{ message }` |
+| `player:join_success` | player | `{ playerId, nickname, gameCode, quizTitle }` |
+| `player:join_error` | player | `{ code, message }` — codes: `GAME_NOT_FOUND`, `GAME_STARTED`, `NICKNAME_TAKEN`, `FULL` |
+| `player:question_ready` | all in game | `{ questionIndex, totalQuestions, timeLimit }` |
+| `player:answering_start` | all in game | `{}` |
+| `player:answer_accepted` | player | `{}` |
+| `player:answer_result` | player | `{ correct, score, totalScore, rank }` |
+| `player:leaderboard` | player | `{ myRank, myScore, top5 }` |
+| `player:game_over` | player | `{ finalRank, finalScore, top5 }` |
+| `display:waiting_room` | display | `{ gameCode, quizTitle, playerCount }` |
+| `display:player_count` | display | `{ count, latestNickname }` |
+| `display:question_start` | display + host | `{ questionIndex, totalQuestions, question, timeLimit }` |
+| `display:time_update` | display | `{ timeRemaining }` — emitted every 500ms |
+| `display:reveal_answer` | display | `{ correctIndex, counts }` |
+| `display:leaderboard` | display + host | `{ scores }` |
+| `display:game_over` | display + host | `{ scores }` |
+
+**Display reconnection catch-up**: When `display:register` fires mid-game, `displayHandlers.js` immediately replays the appropriate event for the current state (e.g., `display:question_start` if in ANSWERING, `display:reveal_answer` if in REVEALING_ANSWER). The timer does not replay — the display will miss elapsed time.
 
 ### Game State Machine
 
@@ -99,6 +134,76 @@ LOBBY → QUESTION_INTRO → ANSWERING → REVEALING_ANSWER → LEADERBOARD
 ```
 
 State lives in `GameSession.state` on the server. The frontend stores mirror it locally after receiving socket events.
+
+### Per-State UI by Role
+
+| State | Display screen | Host | Player |
+|-------|---------------|------|--------|
+| LOBBY | QR Code + quiz title | Player list + Start button | Nickname entry form |
+| QUESTION_INTRO | Question text fades in (no timer) | Question preview | "Preparing…" |
+| ANSWERING | Question + SVG countdown ring (top-right, green→yellow→red) | Answered count progress | A/B/C/D color-block buttons |
+| REVEALING_ANSWER | Correct option highlighted + per-option bar chart | Show Leaderboard button | Correct/wrong + points earned |
+| LEADERBOARD | Top-5 slide-in with scaled font sizes | Next Question / End Game | Personal rank |
+| GAME_OVER | Gold/silver/bronze medal animation + top-5 | Back to home | Final rank + score |
+
+### Frontend (`client/`)
+
+React 18 + TypeScript + Vite. Key dependencies: **Tailwind CSS v4** (uses CSS `@import` / `@theme` syntax, not the v3 `tailwind.config.js`), **Zustand 5**, **Framer Motion 11** (leaderboard slide-in, medal bounce), **@dnd-kit** (question reorder in DesignPage), **qrcode.react 4**.
+
+Routes and their corresponding pages:
+
+| URL | Page | Role |
+|-----|------|------|
+| `/` | `HomePage` | Quiz selection / entry point |
+| `/design`, `/design/:quizId` | `DesignPage` | Create/edit quizzes |
+| `/host/:gameCode` | `HostPage` | Host controls during a game |
+| `/display/:gameCode` | `DisplayPage` | Projector/audience display |
+| `/play`, `/play/:gameCode` | `PlayerPage` | Player join and game flow |
+
+- **Stores** (`src/store/`): `quizStore`, `hostStore`, `playerStore`, `displayStore` — one per role. Stores hold derived UI state only; the source of truth is the server.
+- **`PlayerState`** (`src/types/game.ts`): The player's local UI state machine has 7 values (`JOIN` → `WAITING` → `QUESTION_READY` → `ANSWERING` → `ANSWERED` → `RESULT` → `LEADERBOARD` / `GAME_OVER`). It is distinct from the server's `GameState` (6 values) and lives only in `playerStore`.
+- **`socketService`** (`src/services/socketService.ts`): Single thin wrapper around the shared `socket.ts` singleton. All socket emits go through here; all socket listeners are registered in pages/components via `useSocketEvents`. Before connecting, sets `socket.auth = { role, gameCode }`.
+- **`socket.ts`**: Created with `autoConnect: false` — must call `socketService.connect(role, gameCode)` before any events fire.
+- **`useSocketEvents`** (`src/hooks/useSocket.ts`): Registers/deregisters a map of `{ eventName: handler }` on mount/unmount. Has **no dependency array**, so it re-registers handlers on every render. Pass stable handler references (via `useCallback` or store methods) to avoid stale closures.
+- **`quizApi` / `uploadApi`** (`src/services/`): REST calls via `fetch`. Mockable independently of socket logic.
+- **MSW** (`client/tests/mocks/`): Mock Service Worker handles REST API calls in frontend tests. Socket interactions are mocked directly.
+
+### REST API
+
+All endpoints under `/api/`:
+
+- `GET /api/quizzes` — list all quizzes
+- `POST /api/quizzes` — create quiz (`{ title, description?, defaultTimeLimit? }`)
+- `GET /api/quizzes/:id` — get quiz by id
+- `PUT /api/quizzes/:id` — update quiz metadata
+- `DELETE /api/quizzes/:id` — delete quiz
+- `POST /api/quizzes/:id/questions` — add question
+- `PUT /api/quizzes/:id/questions/:idx` — update question by index
+- `DELETE /api/quizzes/:id/questions/:idx` — delete question by index
+- `POST /api/quizzes/:id/questions/reorder` — reorder (`{ fromIndex, toIndex }`)
+- `POST /api/upload` — upload image (multipart, field name `image`, max 5 MB, jpeg/png/gif/webp); returns `{ url }`
+- `DELETE /api/upload/:filename` — delete uploaded image file
+- `GET /api/network` — returns local IP for client auto-detection in dev
+
+### Domain Constraints
+
+- **Players per game**: max 100 (enforced in `GameSession.addPlayer`)
+- **Questions per quiz**: max 256 (enforced in `QuizService.addQuestion`)
+- **Valid time limits**: `[5, 10, 15, 20, 30, 45, 60]` seconds (validated in `QuizService`)
+- **Scoring**: `Math.max(1, Math.ceil((questionEndTime - Date.now()) / 1000))` — time-based, minimum 1 point for a correct answer
+- **Leaderboard**: always returns top 5 with tied-rank grouping
+
+### Test Organization
+
+Backend (`server/tests/`):
+- `unit/` — models, services, utils, repositories (isolated, no I/O)
+- `integration/api/` — HTTP route tests using supertest
+- `integration/socket/` — Socket.IO flow tests
+
+Frontend (`client/tests/`):
+- `unit/` — stores, hooks, services (no DOM)
+- `integration/` — component and page render tests with React Testing Library + MSW
+- `e2e/` — Playwright tests (require `npm run dev` running)
 
 ### Production Deployment
 

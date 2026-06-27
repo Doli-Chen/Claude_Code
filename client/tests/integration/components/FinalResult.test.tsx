@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { FinalResult } from '../../../src/components/player/FinalResult'
 
 const top5 = [
-  { rank: 1, nickname: 'Alice', score: 100 },
-  { rank: 2, nickname: 'Bob', score: 80 },
+  { rank: 1, nicknames: ['Alice'], total: 1, score: 100 },
+  { rank: 2, nicknames: ['Bob'], total: 1, score: 80 },
 ]
 
 describe('FinalResult', () => {
@@ -28,5 +28,13 @@ describe('FinalResult', () => {
   it('shows closing message', () => {
     render(<FinalResult finalRank={1} finalScore={100} top5={top5} />)
     expect(screen.getByText(/感謝參與/)).toBeInTheDocument()
+  })
+
+  it('shows tied players joined by 、', () => {
+    const tied = [
+      { rank: 1, nicknames: ['Alice', 'Bob'], total: 2, score: 100 },
+    ]
+    render(<FinalResult finalRank={1} finalScore={100} top5={tied} />)
+    expect(screen.getByText('Alice、Bob')).toBeInTheDocument()
   })
 })

@@ -14,7 +14,7 @@ export function LeaderboardSlide({ scores }: Props) {
       <h2 className="text-white text-4xl font-bold mb-4">排行榜</h2>
       {scores.map((entry, i) => (
         <motion.div
-          key={entry.nickname}
+          key={entry.rank}
           initial={{ x: -80, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: i * 0.15 }}
@@ -22,7 +22,10 @@ export function LeaderboardSlide({ scores }: Props) {
         >
           <MedalIcon rank={entry.rank} />
           <span className={`text-white font-bold flex-1 ${FONT_SIZES[i] ?? 'text-xl'}`}>
-            {entry.nickname}
+            {entry.nicknames.slice(0, 3).join('、')}
+            {entry.total > 3 && (
+              <span className="text-white/60 text-base font-normal ml-2">（共 {entry.total} 人）</span>
+            )}
           </span>
           <span className={`text-yellow-300 font-bold ${FONT_SIZES[i] ?? 'text-xl'}`}>
             {entry.score}

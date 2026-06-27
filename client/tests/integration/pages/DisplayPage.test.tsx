@@ -71,7 +71,7 @@ describe('DisplayPage', () => {
   it('shows LeaderboardSlide in LEADERBOARD state', () => {
     useDisplayStore.setState({
       state: 'LEADERBOARD',
-      leaderboard: [{ rank: 1, nickname: 'Alice', score: 100 }],
+      leaderboard: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 100 }],
     } as never)
     renderDisplayPage()
     expect(screen.getByText('排行榜')).toBeInTheDocument()
@@ -80,7 +80,7 @@ describe('DisplayPage', () => {
   it('shows GameOverSlide in GAME_OVER state', () => {
     useDisplayStore.setState({
       state: 'GAME_OVER',
-      leaderboard: [{ rank: 1, nickname: 'Alice', score: 100 }],
+      leaderboard: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 100 }],
     } as never)
     renderDisplayPage()
     expect(screen.getByText(/遊戲結束！/)).toBeInTheDocument()

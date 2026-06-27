@@ -82,13 +82,6 @@ export default function PlayerPage() {
   if (state === 'WAITING') {
     return <WaitingLobby nickname={nickname} quizTitle={quizTitle} />
   }
-  if (state === 'QUESTION_READY') {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <p className="text-white text-2xl animate-pulse">第 {questionIndex + 1} 題準備中...</p>
-      </div>
-    )
-  }
   if (state === 'ANSWERING') {
     return <AnswerPad questionIndex={questionIndex} totalQuestions={totalQuestions} onAnswer={handleAnswer} />
   }

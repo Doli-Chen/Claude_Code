@@ -48,7 +48,7 @@ describe('hostStore', () => {
   })
 
   it('setLeaderboard updates leaderboard', () => {
-    const scores = [{ rank: 1, nickname: 'Alice', score: 100 }]
+    const scores = [{ rank: 1, nicknames: ['Alice'], total: 1, score: 100 }]
     useHostStore.getState().setLeaderboard(scores)
     expect(useHostStore.getState().leaderboard).toHaveLength(1)
   })

@@ -81,15 +81,15 @@ describe('Game flow integration', () => {
   it('host starts game and question appears', async () => {
     const questionReady = waitFor(playerClient, 'player:question_ready');
     const questionStart = waitFor(displayClient, 'display:question_start');
+    const answeringStart = waitFor(playerClient, 'player:answering_start');
     hostClient.emit('host:start_game', { gameCode });
     const [playerData, displayData] = await Promise.all([questionReady, questionStart]);
     expect(playerData.questionIndex).toBe(0);
     expect(displayData.question.text).toBe(sampleQuiz.questions[0].text);
+    await answeringStart;
   });
 
   it('player submits answer and gets result', async () => {
-    const answering = waitFor(playerClient, 'player:answering_start');
-    await answering;
     const result = waitFor(playerClient, 'player:answer_result');
     playerClient.emit('player:submit_answer', { gameCode, answerIndex: 1 });
     const data = await result;

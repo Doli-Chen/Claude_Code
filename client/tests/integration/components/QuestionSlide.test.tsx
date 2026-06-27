@@ -43,6 +43,16 @@ describe('QuestionSlide', () => {
     expect(screen.getByText('✓')).toBeInTheDocument()
   })
 
+  it('shows 公佈答案 banner when correctIndex given', () => {
+    render(<QuestionSlide question={question} questionIndex={0} totalQuestions={5} timeRemaining={0} timeLimit={20} showTimer={false} correctIndex={1} />)
+    expect(screen.getByRole('status')).toHaveTextContent('公佈答案')
+  })
+
+  it('does not show 公佈答案 banner when correctIndex is undefined', () => {
+    render(<QuestionSlide question={question} questionIndex={0} totalQuestions={5} timeRemaining={15} timeLimit={20} showTimer={true} />)
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
   it('shows question progress', () => {
     render(<QuestionSlide question={question} questionIndex={2} totalQuestions={10} timeRemaining={15} timeLimit={20} showTimer={false} />)
     expect(screen.getByText('第 3 / 10 題')).toBeInTheDocument()

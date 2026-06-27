@@ -100,16 +100,29 @@ class GameSession {
 
   getLeaderboard(top = 5) {
     const sorted = [...this.players.values()].sort((a, b) => b.score - a.score);
-    return sorted.slice(0, top).map((p, i) => ({
-      rank: i + 1,
-      nickname: p.nickname,
-      score: p.score,
-    }));
+    const groups = [];
+    let rank = 1, i = 0;
+    while (i < sorted.length) {
+      const score = sorted[i].score;
+      const nicknames = [];
+      while (i < sorted.length && sorted[i].score === score) {
+        nicknames.push(sorted[i].nickname);
+        i++;
+      }
+      groups.push({ rank, score, nicknames, total: nicknames.length });
+      rank += nicknames.length;
+    }
+    return groups.slice(0, top);
   }
 
   getPlayerRank(socketId) {
-    const sorted = [...this.players.values()].sort((a, b) => b.score - a.score);
-    return sorted.findIndex((p) => p.id === socketId) + 1;
+    const player = this.players.get(socketId);
+    if (!player) return 0;
+    let rank = 1;
+    for (const [, p] of this.players) {
+      if (p.score > player.score) rank++;
+    }
+    return rank;
   }
 
   resetAnswerFlags() {

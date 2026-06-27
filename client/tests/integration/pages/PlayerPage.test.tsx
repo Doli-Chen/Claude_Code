@@ -82,18 +82,10 @@ describe('PlayerPage', () => {
     await waitFor(() => expect(screen.getByText('Alice')).toBeInTheDocument())
   })
 
-  it('shows QUESTION_READY state', async () => {
+  it('shows AnswerPad immediately when question_ready received', async () => {
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
     mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20 })
-    await waitFor(() => expect(screen.getByText(/第 1 題準備中/)).toBeInTheDocument())
-  })
-
-  it('shows AnswerPad when answering starts', async () => {
-    renderPlayerPage()
-    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
-    mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20 })
-    mockSocket.emit('player:answering_start', {})
     await waitFor(() => expect(screen.getByLabelText('選項 A')).toBeInTheDocument())
   })
 
@@ -102,7 +94,6 @@ describe('PlayerPage', () => {
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
     mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20 })
-    mockSocket.emit('player:answering_start', {})
     await waitFor(() => screen.getByLabelText('選項 A'))
     await user.click(screen.getByLabelText('選項 A'))
     await waitFor(() => expect(screen.getByText('等待結果...')).toBeInTheDocument())
@@ -112,7 +103,6 @@ describe('PlayerPage', () => {
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
     mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20 })
-    mockSocket.emit('player:answering_start', {})
     mockSocket.emit('player:answer_result', { correct: true, score: 15, totalScore: 15, rank: 1 })
     await waitFor(() => expect(screen.getByText('答對了！')).toBeInTheDocument())
   })
@@ -120,14 +110,14 @@ describe('PlayerPage', () => {
   it('shows RankView after player:leaderboard', async () => {
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
-    mockSocket.emit('player:leaderboard', { myRank: 1, myScore: 15, top5: [{ rank: 1, nickname: 'Alice', score: 15 }] })
+    mockSocket.emit('player:leaderboard', { myRank: 1, myScore: 15, top5: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 15 }] })
     await waitFor(() => expect(screen.getByText('第 1 名')).toBeInTheDocument())
   })
 
   it('shows FinalResult after player:game_over', async () => {
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
-    mockSocket.emit('player:game_over', { finalRank: 1, finalScore: 50, top5: [{ rank: 1, nickname: 'Alice', score: 50 }] })
+    mockSocket.emit('player:game_over', { finalRank: 1, finalScore: 50, top5: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 50 }] })
     await waitFor(() => expect(screen.getByText('遊戲結束！')).toBeInTheDocument())
   })
 

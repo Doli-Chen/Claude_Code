@@ -44,11 +44,6 @@ module.exports = function registerPlayerHandlers(socket, io) {
       total: session.players.size,
     });
 
-    if (session.allAnswered()) {
-      session.clearTimer();
-      gameService.revealAnswer(session, io);
-    }
-
     const player = session.players.get(socket.id);
     if (player) {
       socket.emit('player:answer_result', {

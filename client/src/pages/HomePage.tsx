@@ -24,7 +24,7 @@ export default function HomePage() {
     socket.connect()
     socket.once('host:game_created', ({ gameCode }: { gameCode: string }) => {
       socket.disconnect()
-      navigate(`/host/${gameCode}`)
+      window.open(`/host/${gameCode}`, '_blank')
     })
     socketService.createGame(quiz.id)
   }

@@ -16,10 +16,10 @@ describe('playerStore', () => {
     expect(s.gameCode).toBe('GAME1')
   })
 
-  it('setQuestionReady transitions to QUESTION_READY', () => {
+  it('setQuestionReady transitions to ANSWERING (immediate)', () => {
     usePlayerStore.getState().setQuestionReady(0, 5, 20)
     const s = usePlayerStore.getState()
-    expect(s.state).toBe('QUESTION_READY')
+    expect(s.state).toBe('ANSWERING')
     expect(s.questionIndex).toBe(0)
     expect(s.totalQuestions).toBe(5)
     expect(s.timeLimit).toBe(20)
@@ -34,7 +34,7 @@ describe('playerStore', () => {
   })
 
   it('setLeaderboard stores top5 and transitions to LEADERBOARD', () => {
-    const top5 = [{ rank: 1, nickname: 'Alice', score: 50 }]
+    const top5 = [{ rank: 1, nicknames: ['Alice'], total: 1, score: 50 }]
     usePlayerStore.getState().setLeaderboard(1, 50, top5)
     const s = usePlayerStore.getState()
     expect(s.state).toBe('LEADERBOARD')

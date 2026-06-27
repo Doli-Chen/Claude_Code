@@ -31,7 +31,6 @@ function startQuestion(session, io) {
   const question = session.quiz.questions[session.currentQuestionIndex];
   const timeLimit = question.timeLimit;
   session.questionStartTime = Date.now();
-  session.questionEndTime = Date.now() + timeLimit * 1000;
 
   const questionStartPayload = {
     questionIndex: session.currentQuestionIndex,
@@ -52,12 +51,16 @@ function startQuestion(session, io) {
     timeLimit,
   });
 
-  setTimeout(() => {
-    if (session.state !== STATES.QUESTION_INTRO) return;
-    session.transition(STATES.ANSWERING);
-    io.to(`game:${session.gameCode}`).emit('player:answering_start', {});
-    startTimer(session, io);
-  }, 3000);
+  beginAnswering(session, io);
+}
+
+function beginAnswering(session, io) {
+  if (session.state !== STATES.QUESTION_INTRO) return;
+  session.transition(STATES.ANSWERING);
+  const question = session.quiz.questions[session.currentQuestionIndex];
+  session.questionEndTime = Date.now() + question.timeLimit * 1000;
+  io.to(`game:${session.gameCode}`).emit('player:answering_start', {});
+  startTimer(session, io);
 }
 
 function startTimer(session, io) {
@@ -74,7 +77,7 @@ function startTimer(session, io) {
       total: session.players.size,
     });
 
-    if (remaining <= 0 || session.allAnswered()) {
+    if (remaining <= 0) {
       session.clearTimer();
       revealAnswer(session, io);
     }
@@ -152,6 +155,7 @@ module.exports = {
   getByCode,
   getById,
   startQuestion,
+  beginAnswering,
   revealAnswer,
   showLeaderboard,
   nextQuestion,

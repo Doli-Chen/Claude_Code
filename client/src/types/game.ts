@@ -18,9 +18,9 @@ export type PlayerState =
 
 export interface ScoreEntry {
   rank: number
-  nickname: string
+  nicknames: string[]
+  total: number
   score: number
-  delta?: number
 }
 
 export interface DisplayQuestion {

@@ -20,8 +20,14 @@ interface Props {
 }
 
 export function QuestionSlide({ question, questionIndex, totalQuestions, timeRemaining, timeLimit, showTimer, correctIndex }: Props) {
+  const isRevealing = correctIndex !== undefined && correctIndex >= 0
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-indigo-900 flex flex-col">
+      {isRevealing && (
+        <div className="bg-yellow-400 text-gray-900 font-bold text-2xl text-center py-3 tracking-wide" role="status">
+          🎯 公佈答案
+        </div>
+      )}
       <div className="flex items-center justify-between p-4 bg-black/30">
         <span className="text-white/70 text-lg">
           第 {questionIndex + 1} / {totalQuestions} 題

@@ -121,7 +121,7 @@ describe('GameSession - answering', () => {
 });
 
 describe('GameSession - leaderboard', () => {
-  it('returns top 5 sorted by score', () => {
+  it('returns top 5 groups sorted by score', () => {
     const s = makeSession();
     ['Alice','Bob','Carol','Dan','Eve','Frank'].forEach((name, i) => {
       s.addPlayer(`p${i}`, name);
@@ -129,8 +129,25 @@ describe('GameSession - leaderboard', () => {
     });
     const board = s.getLeaderboard(5);
     expect(board).toHaveLength(5);
-    expect(board[0].nickname).toBe('Alice');
+    expect(board[0].nicknames).toContain('Alice');
     expect(board[0].rank).toBe(1);
+    expect(board[0].total).toBe(1);
+  });
+
+  it('assigns same rank to tied players (competition ranking)', () => {
+    const s = makeSession();
+    s.addPlayer('p1', 'Alice');
+    s.addPlayer('p2', 'Bob');
+    s.addPlayer('p3', 'Carol');
+    s.players.get('p1').score = 100;
+    s.players.get('p2').score = 100;
+    s.players.get('p3').score = 80;
+    const board = s.getLeaderboard(5);
+    expect(board).toHaveLength(2);
+    expect(board[0].rank).toBe(1);
+    expect(board[0].total).toBe(2);
+    expect(board[0].nicknames).toHaveLength(2);
+    expect(board[1].rank).toBe(3);
   });
 });
 

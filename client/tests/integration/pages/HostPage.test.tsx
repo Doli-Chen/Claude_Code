@@ -84,15 +84,29 @@ describe('HostPage', () => {
   })
 
   it('shows answer progress in QUESTION_INTRO state', () => {
-    useHostStore.setState({ state: 'QUESTION_INTRO', currentQuestionIndex: 0, totalQuestions: 5, answeredCount: 2, totalPlayers: 5 } as never)
+    useHostStore.setState({ state: 'QUESTION_INTRO', currentQuestionIndex: 0, totalQuestions: 5, answeredCount: 0, totalPlayers: 5 } as never)
     renderHostPage()
-    expect(screen.getByText('2 / 5 人已作答')).toBeInTheDocument()
+    expect(screen.getByText('0 / 5 人已作答')).toBeInTheDocument()
   })
 
-  it('shows reveal answer button in ANSWERING state', () => {
+  it('transitions to ANSWERING on player:answering_start event', async () => {
+    useHostStore.setState({ state: 'QUESTION_INTRO', currentQuestionIndex: 0, totalQuestions: 5, answeredCount: 0, totalPlayers: 3 } as never)
+    renderHostPage()
+    mockSocket.emit_event('player:answering_start', {})
+    await waitFor(() => expect(screen.getByRole('button', { name: '強制結束計時' })).toBeInTheDocument())
+  })
+
+  it('shows 強制結束計時 button in ANSWERING state when not all answered', () => {
     useHostStore.setState({ state: 'ANSWERING', currentQuestionIndex: 0, totalQuestions: 5, answeredCount: 0, totalPlayers: 3 } as never)
     renderHostPage()
     expect(screen.getByRole('button', { name: '強制結束計時' })).toBeInTheDocument()
+  })
+
+  it('shows early reveal button when all players have answered', () => {
+    useHostStore.setState({ state: 'ANSWERING', currentQuestionIndex: 0, totalQuestions: 5, answeredCount: 3, totalPlayers: 3 } as never)
+    renderHostPage()
+    expect(screen.getByRole('button', { name: '所有玩家已作答，提早公佈答案' })).toBeInTheDocument()
+    expect(screen.getByText('所有玩家已完成作答！')).toBeInTheDocument()
   })
 
   it('shows leaderboard button in REVEALING_ANSWER state', () => {
@@ -114,7 +128,7 @@ describe('HostPage', () => {
   })
 
   it('shows game over view in GAME_OVER state', () => {
-    useHostStore.setState({ state: 'GAME_OVER', leaderboard: [{ rank: 1, nickname: 'Alice', score: 100 }] } as never)
+    useHostStore.setState({ state: 'GAME_OVER', leaderboard: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 100 }] } as never)
     renderHostPage()
     expect(screen.getByText('🎉 遊戲結束')).toBeInTheDocument()
   })
@@ -174,7 +188,7 @@ describe('HostPage', () => {
   it('handles display:leaderboard socket event', async () => {
     useHostStore.setState({ state: 'REVEALING_ANSWER' } as never)
     renderHostPage()
-    mockSocket.emit_event('display:leaderboard', { scores: [{ rank: 1, nickname: 'Alice', score: 100 }] })
+    mockSocket.emit_event('display:leaderboard', { scores: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 100 }] })
     await waitFor(() => expect(screen.getByText('Alice')).toBeInTheDocument())
   })
 })

@@ -63,17 +63,14 @@ describe('Host socket handlers', () => {
     errorClient.disconnect();
   }, 10000);
 
-  it('start_game triggers question and answering events', async () => {
+  it('start_game triggers player:question_ready then player:answering_start immediately', async () => {
     const playerClient = await connect();
     const joined = waitFor(playerClient, 'player:join_success');
     playerClient.emit('player:join', { gameCode, nickname: 'P1' });
     await joined;
 
-    const questionReady = waitFor(playerClient, 'player:question_ready');
-    hostClient.emit('host:start_game', { gameCode });
-    await questionReady;
-
     const answering = waitFor(playerClient, 'player:answering_start');
+    hostClient.emit('host:start_game', { gameCode });
     await answering;
 
     playerClient.disconnect();

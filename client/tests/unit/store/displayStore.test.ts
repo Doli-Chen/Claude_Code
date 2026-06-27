@@ -55,7 +55,7 @@ describe('displayStore', () => {
   })
 
   it('setLeaderboard transitions to LEADERBOARD', () => {
-    const scores = [{ rank: 1, nickname: 'Alice', score: 50 }]
+    const scores = [{ rank: 1, nicknames: ['Alice'], total: 1, score: 50 }]
     useDisplayStore.getState().setLeaderboard(scores)
     const s = useDisplayStore.getState()
     expect(s.state).toBe('LEADERBOARD')

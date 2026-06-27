@@ -41,7 +41,7 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
   setJoined: (gameCode, nickname, quizTitle) =>
     set({ gameCode, nickname, quizTitle, state: 'WAITING' }),
   setQuestionReady: (questionIndex, totalQuestions, timeLimit) =>
-    set({ questionIndex, totalQuestions, timeLimit, state: 'QUESTION_READY' }),
+    set({ questionIndex, totalQuestions, timeLimit, state: 'ANSWERING' }),
   setAnswerResult: (result) => set({ lastResult: result, state: 'RESULT' }),
   setLeaderboard: (myRank, myScore, top5) => set({ myRank, myScore, top5, state: 'LEADERBOARD' }),
   reset: () => set(initial),

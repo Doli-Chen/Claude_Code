@@ -46,16 +46,30 @@ describe('GameService - session management', () => {
 });
 
 describe('GameService - startQuestion', () => {
-  it('transitions session to QUESTION_INTRO and emits events', () => {
+  it('transitions session to ANSWERING and emits events', () => {
     jest.useFakeTimers();
     const session = gameService.createSession(sampleQuiz, 'host-socket');
-    const { io, to, emit } = makeMockIo();
+    const { emit } = makeMockIo();
     const mockIo = { to: jest.fn().mockReturnValue({ emit }) };
 
     gameService.startQuestion(session, mockIo);
-    expect(session.state).toBe('QUESTION_INTRO');
+    expect(session.state).toBe('ANSWERING');
     expect(session.currentQuestionIndex).toBe(0);
     expect(mockIo.to).toHaveBeenCalledWith(`display:${session.gameCode}`);
+
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  it('startQuestion immediately transitions to ANSWERING and sets questionEndTime', () => {
+    jest.useFakeTimers();
+    const session = gameService.createSession(sampleQuiz, 'host-socket');
+    const { emit } = makeMockIo();
+    const mockIo = { to: jest.fn().mockReturnValue({ emit }) };
+
+    gameService.startQuestion(session, mockIo);
+    expect(session.state).toBe('ANSWERING');
+    expect(session.questionEndTime).toBeGreaterThan(Date.now());
 
     jest.clearAllTimers();
     jest.useRealTimers();
@@ -64,17 +78,14 @@ describe('GameService - startQuestion', () => {
 
 describe('GameService - revealAnswer', () => {
   it('transitions to REVEALING_ANSWER and emits', () => {
-    jest.useFakeTimers();
     const session = gameService.createSession(sampleQuiz, 'host-socket');
     session.addPlayer('p1', 'Alice');
     const mockIo = { to: jest.fn().mockReturnValue({ emit: jest.fn() }) };
 
     gameService.startQuestion(session, mockIo);
-    jest.advanceTimersByTime(3000);
     gameService.revealAnswer(session, mockIo);
 
     expect(session.state).toBe('REVEALING_ANSWER');
-    jest.useRealTimers();
   });
 
   it('does nothing if not in ANSWERING state', () => {
@@ -87,18 +98,15 @@ describe('GameService - revealAnswer', () => {
 
 describe('GameService - showLeaderboard', () => {
   it('transitions to LEADERBOARD and emits to display and players', () => {
-    jest.useFakeTimers();
     const session = gameService.createSession(sampleQuiz, 'host-socket');
     session.addPlayer('p1', 'Alice');
     const mockIo = { to: jest.fn().mockReturnValue({ emit: jest.fn() }) };
 
     gameService.startQuestion(session, mockIo);
-    jest.advanceTimersByTime(3000);
     gameService.revealAnswer(session, mockIo);
     gameService.showLeaderboard(session, mockIo);
 
     expect(session.state).toBe('LEADERBOARD');
-    jest.useRealTimers();
   });
 });
 

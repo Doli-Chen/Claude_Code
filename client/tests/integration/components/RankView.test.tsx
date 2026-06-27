@@ -3,9 +3,9 @@ import { render, screen } from '@testing-library/react'
 import { RankView } from '../../../src/components/player/RankView'
 
 const top5 = [
-  { rank: 1, nickname: 'Alice', score: 100 },
-  { rank: 2, nickname: 'Bob', score: 80 },
-  { rank: 3, nickname: 'Carol', score: 60 },
+  { rank: 1, nicknames: ['Alice'], total: 1, score: 100 },
+  { rank: 2, nicknames: ['Bob'], total: 1, score: 80 },
+  { rank: 3, nicknames: ['Carol'], total: 1, score: 60 },
 ]
 
 describe('RankView', () => {
@@ -30,5 +30,13 @@ describe('RankView', () => {
   it('shows waiting message', () => {
     render(<RankView myRank={1} myScore={100} top5={top5} />)
     expect(screen.getByText('等待下一題...')).toBeInTheDocument()
+  })
+
+  it('shows tied players joined by 、', () => {
+    const tied = [
+      { rank: 1, nicknames: ['Alice', 'Bob'], total: 2, score: 100 },
+    ]
+    render(<RankView myRank={1} myScore={100} top5={tied} />)
+    expect(screen.getByText('Alice、Bob')).toBeInTheDocument()
   })
 })

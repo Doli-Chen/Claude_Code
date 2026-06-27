@@ -17,9 +17,12 @@ export function FinalResult({ finalRank, finalScore, top5 }: Props) {
       </div>
       <div className="w-full max-w-sm flex flex-col gap-2">
         {top5.map((entry, i) => (
-          <div key={entry.nickname} className={`flex items-center gap-3 rounded-xl px-4 py-2 ${entry.rank === finalRank ? 'bg-white/30 ring-2 ring-white' : 'bg-white/10'}`}>
+          <div key={entry.rank} className={`flex items-center gap-3 rounded-xl px-4 py-2 ${entry.rank === finalRank ? 'bg-white/30 ring-2 ring-white' : 'bg-white/10'}`}>
             <MedalIcon rank={entry.rank} />
-            <span className={`text-white flex-1 ${i === 0 ? 'text-xl font-bold' : ''}`}>{entry.nickname}</span>
+            <span className={`text-white flex-1 ${i === 0 ? 'text-xl font-bold' : ''}`}>
+              {entry.nicknames.slice(0, 3).join('、')}
+              {entry.total > 3 && <span className="text-white/50 text-xs ml-1">（共 {entry.total} 人）</span>}
+            </span>
             <span className="text-yellow-300 font-bold">{entry.score}</span>
           </div>
         ))}

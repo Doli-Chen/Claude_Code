@@ -45,6 +45,9 @@ export default function HostPage() {
       store.setState('QUESTION_INTRO')
       store.setAnswerProgress(0, store.totalPlayers)
     })
+    socket.on('player:answering_start', () => {
+      store.setState('ANSWERING')
+    })
 
     return () => {
       socket.off('host:game_created')
@@ -55,6 +58,7 @@ export default function HostPage() {
       socket.off('display:leaderboard')
       socket.off('display:game_over')
       socket.off('display:question_start')
+      socket.off('player:answering_start')
       socketService.disconnect()
       store.reset()
     }
@@ -94,20 +98,32 @@ export default function HostPage() {
         )}
 
         {(state === 'QUESTION_INTRO' || state === 'ANSWERING') && (
-          <>
-            <div className="text-center">
-              <p className="text-white/60">第 {currentQuestionIndex + 1} / {totalQuestions} 題</p>
-              <p className="text-2xl font-bold mt-2">
-                {answeredCount} / {totalPlayers} 人已作答
-              </p>
-            </div>
-            <button
-              onClick={() => { socketService.revealAnswer(gameCode); store.setState('REVEALING_ANSWER') }}
-              className="w-full py-3 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600"
-            >
-              強制結束計時
-            </button>
-          </>
+          <div className="text-center">
+            <p className="text-white/60">第 {currentQuestionIndex + 1} / {totalQuestions} 題</p>
+            <p className="text-2xl font-bold mt-2">
+              {answeredCount} / {totalPlayers} 人已作答
+            </p>
+            {state === 'ANSWERING' && answeredCount === totalPlayers && totalPlayers > 0 && (
+              <p className="text-green-400 font-semibold mt-1">所有玩家已完成作答！</p>
+            )}
+          </div>
+        )}
+
+
+        {state === 'ANSWERING' && (
+          <button
+            onClick={() => { socketService.revealAnswer(gameCode); store.setState('REVEALING_ANSWER') }}
+            className={`w-full py-3 rounded-xl text-white font-bold ${
+              answeredCount === totalPlayers && totalPlayers > 0
+                ? 'bg-green-500 hover:bg-green-600'
+                : 'bg-orange-500 hover:bg-orange-600'
+            }`}
+          >
+            {answeredCount === totalPlayers && totalPlayers > 0
+              ? '所有玩家已作答，提早公佈答案'
+              : '強制結束計時'
+            }
+          </button>
         )}
 
         {state === 'REVEALING_ANSWER' && (
@@ -123,9 +139,12 @@ export default function HostPage() {
           <>
             <div className="flex flex-col gap-2">
               {leaderboard.map((e) => (
-                <div key={e.nickname} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
+                <div key={e.rank} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
                   <span className="text-yellow-300 font-bold w-6">#{e.rank}</span>
-                  <span className="flex-1">{e.nickname}</span>
+                  <span className="flex-1">
+                    {e.nicknames.slice(0, 3).join('、')}
+                    {e.total > 3 && <span className="text-white/50 text-xs ml-1">（共 {e.total} 人）</span>}
+                  </span>
                   <span className="text-yellow-300 font-bold">{e.score}</span>
                 </div>
               ))}
@@ -153,9 +172,12 @@ export default function HostPage() {
             <h2 className="text-2xl font-bold text-center">🎉 遊戲結束</h2>
             <div className="flex flex-col gap-2">
               {leaderboard.map((e) => (
-                <div key={e.nickname} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
+                <div key={e.rank} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2">
                   <span className="text-yellow-300 font-bold w-6">#{e.rank}</span>
-                  <span className="flex-1">{e.nickname}</span>
+                  <span className="flex-1">
+                    {e.nicknames.slice(0, 3).join('、')}
+                    {e.total > 3 && <span className="text-white/50 text-xs ml-1">（共 {e.total} 人）</span>}
+                  </span>
                   <span className="text-yellow-300 font-bold">{e.score} 分</span>
                 </div>
               ))}

@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { DisplayQuestion } from '../../types/game'
+import { CountdownRing } from '../display/CountdownRing'
+import { useCountdown } from '../../hooks/useCountdown'
 
 const OPTIONS = [
   { label: 'A', color: 'bg-blue-500 active:bg-blue-700' },
@@ -12,22 +14,32 @@ interface Props {
   question: DisplayQuestion
   questionIndex: number
   totalQuestions: number
+  timeLimit: number
   onAnswer: (index: number) => void
 }
 
-export function AnswerPad({ question, questionIndex, totalQuestions, onAnswer }: Props) {
+export function AnswerPad({ question, questionIndex, totalQuestions, timeLimit, onAnswer }: Props) {
   const [answered, setAnswered] = useState<number | null>(null)
+  const { timeLeft, start, stop } = useCountdown(timeLimit)
+
+  useEffect(() => {
+    start(timeLimit)
+  }, [])
 
   function handleAnswer(i: number) {
     if (answered !== null) return
     setAnswered(i)
+    stop()
     onAnswer(i)
   }
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col overflow-y-auto">
-      <div className="p-3 text-center text-white/60 text-sm">
-        第 {questionIndex + 1} / {totalQuestions} 題
+      <div className="flex justify-between items-center px-4 pt-3 pb-1">
+        <span className="text-white/60 text-sm">第 {questionIndex + 1} / {totalQuestions} 題</span>
+        {answered === null && (
+          <CountdownRing size={72} timeRemaining={timeLeft} timeLimit={timeLimit} />
+        )}
       </div>
 
       <div className="mx-4 mb-4 bg-gray-800 rounded-2xl p-4 flex flex-col gap-3">
@@ -75,7 +87,11 @@ export function AnswerPad({ question, questionIndex, totalQuestions, onAnswer }:
       </div>
 
       {answered !== null && (
-        <div className="p-4 text-center text-white/70 animate-pulse">等待結果...</div>
+        <div className="px-4 pb-6 flex justify-center">
+          <span className="bg-green-600 text-white font-bold text-lg px-6 py-2 rounded-full">
+            ✓ 已作答
+          </span>
+        </div>
       )}
     </div>
   )

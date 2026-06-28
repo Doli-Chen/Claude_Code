@@ -1,9 +1,10 @@
 interface Props {
   timeRemaining: number
   timeLimit: number
+  size?: number
 }
 
-export function CountdownRing({ timeRemaining, timeLimit }: Props) {
+export function CountdownRing({ timeRemaining, timeLimit, size = 96 }: Props) {
   const radius = 36
   const circumference = 2 * Math.PI * radius
   const ratio = Math.max(0, Math.min(1, timeRemaining / timeLimit))
@@ -12,7 +13,7 @@ export function CountdownRing({ timeRemaining, timeLimit }: Props) {
 
   return (
     <div className="flex flex-col items-center justify-center" aria-label={`倒數 ${Math.ceil(timeRemaining)} 秒`}>
-      <svg width="96" height="96" viewBox="0 0 96 96">
+      <svg width={size} height={size} viewBox="0 0 96 96">
         <circle cx="48" cy="48" r={radius} fill="none" stroke="#ffffff33" strokeWidth="8" />
         <circle
           cx="48" cy="48" r={radius}

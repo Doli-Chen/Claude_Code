@@ -74,7 +74,7 @@ export default function PlayerPage() {
     store.setState('ANSWERED')
   }
 
-  const { state, nickname, quizTitle, questionIndex, totalQuestions, currentQuestion, lastResult, myRank, myScore, top5 } = store
+  const { state, nickname, quizTitle, questionIndex, totalQuestions, timeLimit, currentQuestion, lastResult, myRank, myScore, top5 } = store
 
   if (state === 'JOIN') {
     return <JoinForm initialCode={codeFromUrl} onJoin={handleJoin} error={joinError} />
@@ -82,15 +82,8 @@ export default function PlayerPage() {
   if (state === 'WAITING') {
     return <WaitingLobby nickname={nickname} quizTitle={quizTitle} />
   }
-  if (state === 'ANSWERING' && currentQuestion) {
-    return <AnswerPad question={currentQuestion} questionIndex={questionIndex} totalQuestions={totalQuestions} onAnswer={handleAnswer} />
-  }
-  if (state === 'ANSWERED') {
-    return (
-      <div className="min-h-screen bg-gray-800 flex items-center justify-center">
-        <p className="text-white text-xl animate-pulse">等待結果...</p>
-      </div>
-    )
+  if ((state === 'ANSWERING' || state === 'ANSWERED') && currentQuestion) {
+    return <AnswerPad key={questionIndex} question={currentQuestion} questionIndex={questionIndex} totalQuestions={totalQuestions} timeLimit={timeLimit} onAnswer={handleAnswer} />
   }
   if (state === 'RESULT' && lastResult) {
     return <AnswerFeedback result={lastResult} />

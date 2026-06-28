@@ -44,7 +44,7 @@ export function QuestionSlide({ question, questionIndex, totalQuestions, timeRem
         <h2 className="text-white text-3xl font-bold text-center max-w-3xl">{question.text}</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 p-4">
+      <div className="grid grid-cols-2 gap-6 p-6">
         {question.options.map((opt, i) => {
           const isCorrect = correctIndex !== undefined && i === correctIndex
           const isWrong = correctIndex !== undefined && correctIndex >= 0 && i !== correctIndex
@@ -52,13 +52,13 @@ export function QuestionSlide({ question, questionIndex, totalQuestions, timeRem
             <div
               key={i}
               className={`
-                ${OPTION_COLORS[i]} rounded-xl p-4 flex items-center gap-3
+                ${OPTION_COLORS[i]} rounded-xl p-8 min-h-32 flex items-center gap-3
                 ${isWrong ? 'opacity-40' : ''}
                 ${isCorrect ? 'ring-4 ring-white' : ''}
               `}
             >
-              <span className="text-white text-2xl font-bold w-8">{OPTION_LABELS[i]}</span>
-              <span className="text-white text-xl font-semibold">{opt.text}</span>
+              <span className="text-white text-4xl font-bold w-12">{OPTION_LABELS[i]}</span>
+              <span className="text-white text-3xl font-semibold">{opt.text}</span>
               {isCorrect && <span className="ml-auto text-2xl">✓</span>}
             </div>
           )

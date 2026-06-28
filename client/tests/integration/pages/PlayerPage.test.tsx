@@ -89,14 +89,15 @@ describe('PlayerPage', () => {
     await waitFor(() => expect(screen.getByLabelText('選項 A')).toBeInTheDocument())
   })
 
-  it('shows waiting state after answer submitted', async () => {
+  it('shows 已作答 status and keeps AnswerPad visible after answer submitted', async () => {
     const user = userEvent.setup()
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
     mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一', imageUrl: null }, { text: '選項二', imageUrl: null }, { text: '選項三', imageUrl: null }, { text: '選項四', imageUrl: null }] } })
     await waitFor(() => screen.getByLabelText('選項 A'))
     await user.click(screen.getByLabelText('選項 A'))
-    await waitFor(() => expect(screen.getByText('等待結果...')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('✓ 已作答')).toBeInTheDocument())
+    expect(screen.getByLabelText('選項 A')).toBeInTheDocument()
   })
 
   it('shows AnswerFeedback after player:answer_result', async () => {

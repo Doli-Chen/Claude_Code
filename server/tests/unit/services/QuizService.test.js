@@ -92,6 +92,22 @@ describe('addQuestion', () => {
       service.addQuestion('q1', { ...validQuestion, timeLimit: 99 })
     ).rejects.toMatchObject({ status: 400 });
   });
+
+  it('preserves imageUrl on each option', async () => {
+    repo.findById.mockResolvedValue({ ...baseQuiz });
+    repo.save.mockResolvedValue({});
+    const q = await service.addQuestion('q1', {
+      ...validQuestion,
+      options: [
+        { text: 'A', imageUrl: '/uploads/a.png' },
+        { text: 'B' },
+        { text: 'C' },
+        { text: 'D' },
+      ],
+    });
+    expect(q.options[0].imageUrl).toBe('/uploads/a.png');
+    expect(q.options[1].imageUrl).toBeNull();
+  });
 });
 
 describe('updateQuestion', () => {

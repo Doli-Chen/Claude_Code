@@ -18,6 +18,13 @@ export function QuestionEditor({ question, onChange }: Props) {
     onChange({ options })
   }
 
+  function updateOptionImage(index: number, imageUrl: string | null) {
+    const options = question.options.map((o) =>
+      o.index === index ? { ...o, imageUrl } : o
+    )
+    onChange({ options })
+  }
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <div>
@@ -45,25 +52,32 @@ export function QuestionEditor({ question, onChange }: Props) {
         <label className="block text-sm font-medium text-gray-700 mb-2">選項（點選正確答案）</label>
         <div className="flex flex-col gap-2">
           {question.options.map((opt, i) => (
-            <div key={i} className={`flex items-center gap-2 border-2 rounded-lg p-2 ${OPTION_COLORS[i]}`}>
-              <button
-                onClick={() => onChange({ correctIndex: i })}
-                className={`w-8 h-8 rounded-full font-bold text-sm shrink-0 transition-colors ${
-                  question.correctIndex === i
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                }`}
-                aria-label={`設定選項 ${OPTION_LABELS[i]} 為正確答案`}
-              >
-                {OPTION_LABELS[i]}
-              </button>
-              <input
-                type="text"
-                value={opt.text}
-                onChange={(e) => updateOption(i, e.target.value)}
-                placeholder={`選項 ${OPTION_LABELS[i]}`}
-                className="flex-1 border-none outline-none text-sm bg-transparent"
-                aria-label={`選項 ${OPTION_LABELS[i]} 文字`}
+            <div key={i} className={`flex flex-col gap-2 border-2 rounded-lg p-2 ${OPTION_COLORS[i]}`}>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onChange({ correctIndex: i })}
+                  className={`w-8 h-8 rounded-full font-bold text-sm shrink-0 transition-colors ${
+                    question.correctIndex === i
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                  }`}
+                  aria-label={`設定選項 ${OPTION_LABELS[i]} 為正確答案`}
+                >
+                  {OPTION_LABELS[i]}
+                </button>
+                <input
+                  type="text"
+                  value={opt.text}
+                  onChange={(e) => updateOption(i, e.target.value)}
+                  placeholder={`選項 ${OPTION_LABELS[i]}`}
+                  className="flex-1 border-none outline-none text-sm bg-transparent"
+                  aria-label={`選項 ${OPTION_LABELS[i]} 文字`}
+                />
+              </div>
+              <ImageUploader
+                imageUrl={opt.imageUrl}
+                onUploaded={(url) => updateOptionImage(i, url)}
+                onRemoved={() => updateOptionImage(i, null)}
               />
             </div>
           ))}

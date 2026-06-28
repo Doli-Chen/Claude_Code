@@ -26,7 +26,7 @@ export interface ScoreEntry {
 export interface DisplayQuestion {
   text: string
   imageUrl: string | null
-  options: Array<{ text: string }>
+  options: Array<{ text: string; imageUrl: string | null }>
 }
 
 export interface AnswerResult {

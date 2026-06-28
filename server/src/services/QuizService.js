@@ -68,7 +68,7 @@ async function addQuestion(quizId, questionData) {
     text: questionData.text || '',
     imageUrl: questionData.imageUrl || null,
     timeLimit: questionData.timeLimit ?? quiz.defaultTimeLimit,
-    options: questionData.options.map((o, i) => ({ index: i, text: o.text || '' })),
+    options: questionData.options.map((o, i) => ({ index: i, text: o.text || '', imageUrl: o.imageUrl || null })),
     correctIndex: questionData.correctIndex,
   };
   quiz.questions.push(question);

@@ -10,10 +10,10 @@ const baseQuestion: Question = {
   imageUrl: null,
   timeLimit: 20,
   options: [
-    { index: 0, text: 'Peter' },
-    { index: 1, text: 'Paul' },
-    { index: 2, text: 'John' },
-    { index: 3, text: 'James' },
+    { index: 0, text: 'Peter', imageUrl: null },
+    { index: 1, text: 'Paul', imageUrl: null },
+    { index: 2, text: 'John', imageUrl: null },
+    { index: 3, text: 'James', imageUrl: null },
   ],
   correctIndex: 1,
 }
@@ -64,5 +64,10 @@ describe('QuestionEditor', () => {
     await user.clear(optionA)
     await user.type(optionA, 'Matthew')
     expect(onChange).toHaveBeenCalled()
+  })
+
+  it('renders an image uploader for the question and each of the 4 options', () => {
+    render(<QuestionEditor question={baseQuestion} onChange={vi.fn()} />)
+    expect(screen.getAllByLabelText('上傳圖片區域')).toHaveLength(5)
   })
 })

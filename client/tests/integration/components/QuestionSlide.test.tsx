@@ -7,10 +7,10 @@ const question: DisplayQuestion = {
   text: 'Who wrote Romans?',
   imageUrl: null,
   options: [
-    { text: 'Peter' },
-    { text: 'Paul' },
-    { text: 'John' },
-    { text: 'James' },
+    { text: 'Peter', imageUrl: null },
+    { text: 'Paul', imageUrl: null },
+    { text: 'John', imageUrl: null },
+    { text: 'James', imageUrl: null },
   ],
 }
 

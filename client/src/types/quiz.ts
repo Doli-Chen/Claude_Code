@@ -1,6 +1,7 @@
 export interface QuizOption {
   index: number
   text: string
+  imageUrl: string | null
 }
 
 export interface Question {

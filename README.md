@@ -1,12 +1,13 @@
-# 聖經問答遊戲 Bible Quiz
+# 快問快答遊戲 Bible Quiz
 
-類 Kahoot 的即時多人聖經問答遊戲，專為教會聚會設計。出題者可透過網頁介面建立題庫，玩家掃描 QR Code 即可加入作答，系統依剩餘秒數即時計分並顯示排行榜。
+類 Kahoot 的即時多人快問快答遊戲，專為教會聚會設計。出題者可透過網頁介面建立題庫，玩家掃描 QR Code 即可加入作答，系統依剩餘秒數即時計分並顯示排行榜。
 
 ## 功能特色
 
 - **出題介面**：網頁式題庫設計，支援文字與圖片題目，最多 256 題，可拖曳排序
 - **即時遊戲**：Socket.io 驅動，毫秒級同步玩家作答狀態
 - **QR Code 加入**：顯示畫面呈現大型 QR Code，玩家掃碼直接進入等候室
+- **行動裝置顯示完整題目**：玩家作答畫面同步顯示題目文字與各選項內容，無需抬頭看大螢幕
 - **倒數計時**：右上角 SVG 圓環動畫，綠→黃→紅顏色提示剩餘時間
 - **即時計分**：得分 = 答題時剩餘秒數（最低 1 分），伺服器端權威計算
 - **排行榜**：每題結束後顯示前 5 名，第 1 名字體最大，依序遞減
@@ -113,7 +114,7 @@ cd client && npm install && cd ..
 ```bash
 npm run dev
 # 後端啟動於 http://localhost:3001
-# 前端啟動於 http://localhost:5173
+# 前端等後端就緒後啟動於 http://localhost:5173
 ```
 
 ### 遊戲流程
@@ -154,7 +155,8 @@ npm run dev
 | PUT | `/api/quizzes/:id/questions/:idx` | 更新題目 |
 | DELETE | `/api/quizzes/:id/questions/:idx` | 刪除題目 |
 | POST | `/api/quizzes/:id/questions/reorder` | 重新排序 |
-| POST | `/api/upload` | 上傳圖片（multipart, field: `image`）|
+| POST | `/api/upload` | 上傳圖片（multipart, field: `image`，最大 5MB）|
+| DELETE | `/api/upload/:filename` | 刪除已上傳圖片 |
 | DELETE | `/api/upload/:filename` | 刪除圖片 |
 | GET | `/api/network` | 取得本機 IP（QR Code 用）|
 
@@ -183,8 +185,8 @@ npm run test:e2e
 
 | 範圍 | 測試數 | Statements | Branches | Functions | Lines |
 |------|--------|------------|----------|-----------|-------|
-| 後端 | 97 | 93.23% | 80.11% | 94.18% | 96.58% |
-| 前端 | 174 | 93.05% | 91.92% | 82.45% | 93.05% |
+| 後端 | 109 | 93.23% | 80.11% | 94.18% | 96.58% |
+| 前端 | 185 | 93.05% | 91.92% | 82.45% | 93.05% |
 
 ### 測試分層
 

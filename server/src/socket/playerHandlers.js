@@ -43,16 +43,6 @@ module.exports = function registerPlayerHandlers(socket, io) {
       answered,
       total: session.players.size,
     });
-
-    const player = session.players.get(socket.id);
-    if (player) {
-      socket.emit('player:answer_result', {
-        correct: result.correct,
-        score: result.pointsEarned,
-        totalScore: result.totalScore,
-        rank: session.getPlayerRank(socket.id),
-      });
-    }
   });
 
   socket.on('disconnect', () => {

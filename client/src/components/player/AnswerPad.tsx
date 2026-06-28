@@ -38,7 +38,7 @@ export function AnswerPad({ question, questionIndex, totalQuestions, onAnswer }:
           <img
             src={question.imageUrl}
             alt="題目圖片"
-            className="w-full rounded-xl object-cover max-h-48"
+            className="w-full rounded-xl object-contain max-h-64"
           />
         )}
       </div>
@@ -66,7 +66,7 @@ export function AnswerPad({ question, questionIndex, totalQuestions, onAnswer }:
               />
             )}
             {question.options[i] && (
-              <span className="text-base mt-1 text-center leading-tight">
+              <span className="text-xl mt-1 text-center leading-tight">
                 {question.options[i].text}
               </span>
             )}

@@ -89,9 +89,13 @@ describe('Game flow integration', () => {
     await answeringStart;
   });
 
-  it('player submits answer and gets result', async () => {
-    const result = waitFor(playerClient, 'player:answer_result');
+  it('player submits answer and gets accepted, result arrives after host reveals', async () => {
+    const accepted = waitFor(playerClient, 'player:answer_accepted');
     playerClient.emit('player:submit_answer', { gameCode, answerIndex: 1 });
+    await accepted;
+
+    const result = waitFor(playerClient, 'player:answer_result');
+    hostClient.emit('host:reveal_answer', { gameCode });
     const data = await result;
     expect(data.correct).toBe(true);
     expect(data.totalScore).toBeGreaterThan(0);

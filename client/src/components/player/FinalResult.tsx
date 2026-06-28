@@ -27,7 +27,7 @@ export function FinalResult({ finalRank, finalScore, top5 }: Props) {
           </div>
         ))}
       </div>
-      <p className="text-white/60 text-sm mt-auto">感謝參與！願神的話語存在你心！</p>
+      <p className="text-white/80 text-xl font-medium">感謝參與!</p>
     </div>
   )
 }

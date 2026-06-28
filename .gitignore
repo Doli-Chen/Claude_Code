@@ -13,3 +13,4 @@ client/playwright-report/
 client/test-results/
 server/coverage/
 server/node_modules/
+*.pdf

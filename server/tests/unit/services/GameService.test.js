@@ -94,6 +94,19 @@ describe('GameService - revealAnswer', () => {
     gameService.revealAnswer(session, mockIo);
     expect(session.state).toBe('LOBBY');
   });
+
+  it('sends correct:false to players who did not answer', () => {
+    const session = gameService.createSession(sampleQuiz, 'host-socket');
+    session.addPlayer('p1', 'Alice');
+    const emit = jest.fn();
+    const mockIo = { to: jest.fn().mockReturnValue({ emit }) };
+
+    gameService.startQuestion(session, mockIo);
+    gameService.revealAnswer(session, mockIo);
+
+    expect(mockIo.to).toHaveBeenCalledWith('p1');
+    expect(emit).toHaveBeenCalledWith('player:answer_result', expect.objectContaining({ correct: false, score: 0 }));
+  });
 });
 
 describe('GameService - showLeaderboard', () => {

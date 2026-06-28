@@ -13,10 +13,10 @@ function emptyQuestion(defaultTimeLimit = 20): Omit<Question, 'id'> {
     imageUrl: null,
     timeLimit: defaultTimeLimit,
     options: [
-      { index: 0, text: '' },
-      { index: 1, text: '' },
-      { index: 2, text: '' },
-      { index: 3, text: '' },
+      { index: 0, text: '', imageUrl: null },
+      { index: 1, text: '', imageUrl: null },
+      { index: 2, text: '', imageUrl: null },
+      { index: 3, text: '', imageUrl: null },
     ],
     correctIndex: 0,
   }

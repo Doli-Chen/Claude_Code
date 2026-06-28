@@ -32,7 +32,12 @@ describe('quizApi', () => {
   it('addQuestion returns the new question', async () => {
     const q = {
       text: 'New Q', imageUrl: null, timeLimit: 20, correctIndex: 0,
-      options: [{ index: 0, text: 'A' }, { index: 1, text: 'B' }, { index: 2, text: 'C' }, { index: 3, text: 'D' }],
+      options: [
+        { index: 0, text: 'A', imageUrl: null },
+        { index: 1, text: 'B', imageUrl: null },
+        { index: 2, text: 'C', imageUrl: null },
+        { index: 3, text: 'D', imageUrl: null },
+      ],
     }
     const result = await quizApi.addQuestion('quiz-1', q)
     expect(result.id).toBeDefined()

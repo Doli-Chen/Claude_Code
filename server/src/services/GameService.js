@@ -113,6 +113,13 @@ function revealAnswer(session, io) {
         totalScore: player.score,
         rank: session.getPlayerRank(socketId),
       });
+    } else {
+      io.to(socketId).emit('player:answer_result', {
+        correct: false,
+        score: 0,
+        totalScore: player.score,
+        rank: session.getPlayerRank(socketId),
+      });
     }
   }
 }

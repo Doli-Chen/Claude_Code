@@ -8,10 +8,10 @@ const mockQuestion: DisplayQuestion = {
   text: '測試題目',
   imageUrl: null,
   options: [
-    { text: '選項一' },
-    { text: '選項二' },
-    { text: '選項三' },
-    { text: '選項四' },
+    { text: '選項一', imageUrl: null },
+    { text: '選項二', imageUrl: null },
+    { text: '選項三', imageUrl: null },
+    { text: '選項四', imageUrl: null },
   ],
 }
 
@@ -65,5 +65,20 @@ describe('AnswerPad', () => {
     render(<AnswerPad question={mockQuestion} questionIndex={0} totalQuestions={5} onAnswer={onAnswer} />)
     await user.click(screen.getByLabelText('選項 A'))
     expect(onAnswer).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders option image when imageUrl provided', () => {
+    const qWithOptionImage: DisplayQuestion = {
+      ...mockQuestion,
+      options: [
+        { text: '選項一', imageUrl: '/uploads/x.png' },
+        { text: '選項二', imageUrl: null },
+        { text: '選項三', imageUrl: null },
+        { text: '選項四', imageUrl: null },
+      ],
+    }
+    render(<AnswerPad question={qWithOptionImage} questionIndex={0} totalQuestions={5} onAnswer={vi.fn()} />)
+    const button = screen.getByLabelText('選項 A')
+    expect(button.querySelector('img')).toHaveAttribute('src', '/uploads/x.png')
   })
 })

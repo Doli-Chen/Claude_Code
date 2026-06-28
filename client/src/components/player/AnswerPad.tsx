@@ -31,7 +31,7 @@ export function AnswerPad({ question, questionIndex, totalQuestions, onAnswer }:
       </div>
 
       <div className="mx-4 mb-4 bg-gray-800 rounded-2xl p-4 flex flex-col gap-3">
-        <p className="text-white text-lg font-medium text-center leading-snug">
+        <p className="text-white text-2xl font-medium text-center leading-snug">
           {question.text}
         </p>
         {question.imageUrl && (
@@ -57,9 +57,16 @@ export function AnswerPad({ question, questionIndex, totalQuestions, onAnswer }:
               ${answered === i ? 'ring-4 ring-white' : ''}
             `}
           >
-            <span className="text-2xl font-bold">{opt.label}</span>
+            <span className="text-3xl font-bold">{opt.label}</span>
+            {question.options[i]?.imageUrl && (
+              <img
+                src={question.options[i].imageUrl ?? undefined}
+                alt=""
+                className="w-full max-h-16 object-contain rounded mt-1"
+              />
+            )}
             {question.options[i] && (
-              <span className="text-sm mt-1 text-center leading-tight">
+              <span className="text-base mt-1 text-center leading-tight">
                 {question.options[i].text}
               </span>
             )}

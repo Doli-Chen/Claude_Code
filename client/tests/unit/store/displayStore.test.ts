@@ -28,7 +28,12 @@ describe('displayStore', () => {
     const question = {
       text: 'Test?',
       imageUrl: null,
-      options: [{ index: 0, text: 'A' }, { index: 1, text: 'B' }, { index: 2, text: 'C' }, { index: 3, text: 'D' }],
+      options: [
+        { text: 'A', imageUrl: null },
+        { text: 'B', imageUrl: null },
+        { text: 'C', imageUrl: null },
+        { text: 'D', imageUrl: null },
+      ],
     }
     useDisplayStore.getState().setQuestion({ questionIndex: 0, totalQuestions: 5, question, timeLimit: 20 })
     const s = useDisplayStore.getState()

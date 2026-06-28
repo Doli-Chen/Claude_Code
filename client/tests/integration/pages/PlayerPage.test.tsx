@@ -85,7 +85,7 @@ describe('PlayerPage', () => {
   it('shows AnswerPad immediately when question_ready received', async () => {
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
-    mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一' }, { text: '選項二' }, { text: '選項三' }, { text: '選項四' }] } })
+    mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一', imageUrl: null }, { text: '選項二', imageUrl: null }, { text: '選項三', imageUrl: null }, { text: '選項四', imageUrl: null }] } })
     await waitFor(() => expect(screen.getByLabelText('選項 A')).toBeInTheDocument())
   })
 
@@ -93,7 +93,7 @@ describe('PlayerPage', () => {
     const user = userEvent.setup()
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
-    mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一' }, { text: '選項二' }, { text: '選項三' }, { text: '選項四' }] } })
+    mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一', imageUrl: null }, { text: '選項二', imageUrl: null }, { text: '選項三', imageUrl: null }, { text: '選項四', imageUrl: null }] } })
     await waitFor(() => screen.getByLabelText('選項 A'))
     await user.click(screen.getByLabelText('選項 A'))
     await waitFor(() => expect(screen.getByText('等待結果...')).toBeInTheDocument())
@@ -102,7 +102,7 @@ describe('PlayerPage', () => {
   it('shows AnswerFeedback after player:answer_result', async () => {
     renderPlayerPage()
     mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
-    mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一' }, { text: '選項二' }, { text: '選項三' }, { text: '選項四' }] } })
+    mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一', imageUrl: null }, { text: '選項二', imageUrl: null }, { text: '選項三', imageUrl: null }, { text: '選項四', imageUrl: null }] } })
     mockSocket.emit('player:answer_result', { correct: true, score: 15, totalScore: 15, rank: 1 })
     await waitFor(() => expect(screen.getByText('答對了！')).toBeInTheDocument())
   })

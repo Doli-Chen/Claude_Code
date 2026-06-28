@@ -209,7 +209,13 @@ Backend coverage thresholds enforced by Jest: 80% branches, 85% functions/lines/
 
 ### Production Deployment
 
-In `NODE_ENV=production`, Express statically serves `client/dist/` and catches all non-API routes with `index.html` (SPA fallback). Railway runs `npm run build` then `npm start`. The `VITE_SERVER_URL` env var must be set at build time so the client socket connects to the correct URL.
+In `NODE_ENV=production`, Express statically serves `client/dist/` and catches all non-API routes with `index.html` (SPA fallback). Railway runs `npm install` (which triggers `postinstall` to install `server/` and `client/` dependencies), then `npm run build`, then `npm start`.
+
+`VITE_SERVER_URL` is **not required** for Railway — the socket connects to the same origin (`io('')`), and `DisplayPage` derives the QR code join URL from `window.location.origin` in non-dev environments. Only set `VITE_SERVER_URL` if the frontend and backend are on different domains.
+
+Required Railway env vars: `NODE_ENV=production`, `UPLOAD_DIR=/data/uploads`, `QUIZ_DATA_DIR=/data/quizzes`. A Persistent Volume mounted at `/data` is needed to survive redeployments.
+
+Two one-shot migration scripts exist at repo root (`migrate-quizzes.js`, `migrate-images.js`) for copying local quiz data and uploaded images to a Railway instance.
 
 ## Environment Variables
 
@@ -221,8 +227,8 @@ UPLOAD_DIR=uploads
 QUIZ_DATA_DIR=./data/quizzes
 ```
 
-**Frontend** (`client/.env`): Only needed for cloud deployment:
+**Frontend** (`client/.env`): Only needed when frontend and backend are on **different** domains:
 ```
-VITE_SERVER_URL=https://your-app.railway.app
+VITE_SERVER_URL=https://your-backend.railway.app
 ```
-Local dev auto-detects the server IP via `GET /api/network`.
+Local dev auto-detects the server IP via `GET /api/network`. Railway single-service deployments do not need this variable.

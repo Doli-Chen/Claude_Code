@@ -269,11 +269,17 @@ VITE_SERVER_URL=https://your-app.railway.app   # 雲端部署時的伺服器 URL
 1. 在 Railway 建立新專案，連結此 Git repository
 2. 設定環境變數：
    - `NODE_ENV=production`
-   - `PORT=3001`
-   - `VITE_SERVER_URL=https://<your-app>.railway.app`
-   - `UPLOAD_DIR=/data/uploads`（掛載 Persistent Volume 至 `/data/uploads`）
-3. Railway 自動執行 `npm run build` 後以 `npm start` 啟動
-4. 前端 `client/dist/` 由 Express 靜態服務一併提供
+   - `UPLOAD_DIR=/data/uploads`
+   - `QUIZ_DATA_DIR=/data/quizzes`
+3. （建議）新增 Persistent Volume，Mount Path 設為 `/data`，題庫與圖片才不會在重新部署後消失
+4. Railway 自動執行 `npm install`（觸發 `postinstall` 安裝子目錄依賴）→ `npm run build` → `npm start`
+5. 前端 `client/dist/` 由 Express 靜態服務一併提供，QR Code 自動使用公開網域
+
+> **遷移現有資料**：若本機已有題庫與圖片，可執行以下腳本上傳至雲端：
+> ```bash
+> node migrate-quizzes.js https://your-app.up.railway.app
+> node migrate-images.js https://your-app.up.railway.app
+> ```
 
 ---
 

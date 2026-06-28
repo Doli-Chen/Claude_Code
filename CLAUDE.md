@@ -141,7 +141,7 @@ State lives in `GameSession.state` on the server. The frontend stores mirror it 
 |-------|---------------|------|--------|
 | LOBBY | QR Code + quiz title | Player list + Start button | Nickname entry form |
 | QUESTION_INTRO | Question text fades in (no timer) | Question preview | "Preparing…" |
-| ANSWERING | Question + SVG countdown ring (top-right, green→yellow→red) | Answered count progress | A/B/C/D color-block buttons |
+| ANSWERING | Question + SVG countdown ring (top-right, green→yellow→red) | Answered count progress | A/B/C/D color-block buttons + countdown ring (top-right, size=72); after answering, stays on same screen with selected option highlighted and "✓ 已作答" badge — no separate waiting screen |
 | REVEALING_ANSWER | Correct option highlighted + per-option bar chart | Show Leaderboard button | Correct/wrong + points earned |
 | LEADERBOARD | Top-5 slide-in with scaled font sizes | Next Question / End Game | Personal rank |
 | GAME_OVER | Gold/silver/bronze medal animation + top-5 | Back to home | Final rank + score |
@@ -161,7 +161,7 @@ Routes and their corresponding pages:
 | `/play`, `/play/:gameCode` | `PlayerPage` | Player join and game flow |
 
 - **Stores** (`src/store/`): `quizStore`, `hostStore`, `playerStore`, `displayStore` — one per role. Stores hold derived UI state only; the source of truth is the server.
-- **`PlayerState`** (`src/types/game.ts`): Defines 7 values (`JOIN`, `WAITING`, `QUESTION_READY`, `ANSWERING`, `ANSWERED`, `RESULT`, `LEADERBOARD`, `GAME_OVER`). `QUESTION_READY` is defined in the type but never set in practice — `setQuestionReady()` in `playerStore` transitions directly to `ANSWERING`. Actual flow: `JOIN → WAITING → ANSWERING → ANSWERED → RESULT → LEADERBOARD / GAME_OVER`.
+- **`PlayerState`** (`src/types/game.ts`): Defines 7 values (`JOIN`, `WAITING`, `QUESTION_READY`, `ANSWERING`, `ANSWERED`, `RESULT`, `LEADERBOARD`, `GAME_OVER`). `QUESTION_READY` is defined in the type but never set in practice — `setQuestionReady()` in `playerStore` transitions directly to `ANSWERING`. Actual flow: `JOIN → WAITING → ANSWERING → ANSWERED → RESULT → LEADERBOARD / GAME_OVER`. `PlayerPage` renders `AnswerPad` for both `ANSWERING` and `ANSWERED` states (no separate waiting screen); a `key={questionIndex}` prop ensures the component remounts fresh on each new question.
 - **`socketService`** (`src/services/socketService.ts`): Single thin wrapper around the shared `socket.ts` singleton. All socket emits go through here; all socket listeners are registered in pages/components via `useSocketEvents`. Before connecting, sets `socket.auth = { role, gameCode }`.
 - **`socket.ts`**: Created with `autoConnect: false` — must call `socketService.connect(role, gameCode)` before any events fire.
 - **`useSocketEvents`** (`src/hooks/useSocket.ts`): Registers/deregisters a map of `{ eventName: handler }` on mount/unmount. Has **no dependency array**, so it re-registers handlers on every render. Pass stable handler references (via `useCallback` or store methods) to avoid stale closures.

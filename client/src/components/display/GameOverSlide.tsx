@@ -19,7 +19,7 @@ export function GameOverSlide({ scores }: Props) {
       <div className="flex flex-col gap-3 w-full max-w-2xl">
         {scores.map((entry, i) => (
           <motion.div
-            key={entry.nickname}
+            key={entry.rank}
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 + i * 0.2 }}
@@ -27,7 +27,10 @@ export function GameOverSlide({ scores }: Props) {
           >
             <MedalIcon rank={entry.rank} />
             <span className={`text-white font-bold flex-1 ${i === 0 ? 'text-4xl' : i === 1 ? 'text-3xl' : 'text-2xl'}`}>
-              {entry.nickname}
+              {entry.nicknames.slice(0, 3).join('、')}
+              {entry.total > 3 && (
+                <span className="text-white/60 text-base font-normal ml-2">（共 {entry.total} 人）</span>
+              )}
             </span>
             <span className={`text-yellow-300 font-bold ${i === 0 ? 'text-4xl' : 'text-2xl'}`}>
               {entry.score} 分

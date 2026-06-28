@@ -60,9 +60,10 @@ export default function DisplayPage() {
 
   const { state, quizTitle, playerCount, latestNickname, question, timeRemaining, timeLimit, correctIndex, leaderboard } = store
 
-  const joinPort = import.meta.env.DEV ? 5173 : networkInfo?.port
   const serverUrl = import.meta.env.VITE_SERVER_URL ||
-    (networkInfo ? `http://${networkInfo.localIP}:${joinPort}` : window.location.origin)
+    (import.meta.env.DEV && networkInfo
+      ? `http://${networkInfo.localIP}:5173`
+      : window.location.origin)
   const joinUrl = `${serverUrl}/play/${gameCode}`
 
   if (state === 'LOBBY') {

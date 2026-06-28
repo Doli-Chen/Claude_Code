@@ -17,12 +17,23 @@ describe('playerStore', () => {
   })
 
   it('setQuestionReady transitions to ANSWERING (immediate)', () => {
-    usePlayerStore.getState().setQuestionReady(0, 5, 20)
+    const question = {
+      text: 'Test?',
+      imageUrl: null,
+      options: [
+        { text: 'A', imageUrl: null },
+        { text: 'B', imageUrl: null },
+        { text: 'C', imageUrl: null },
+        { text: 'D', imageUrl: null },
+      ],
+    }
+    usePlayerStore.getState().setQuestionReady(0, 5, 20, question)
     const s = usePlayerStore.getState()
     expect(s.state).toBe('ANSWERING')
     expect(s.questionIndex).toBe(0)
     expect(s.totalQuestions).toBe(5)
     expect(s.timeLimit).toBe(20)
+    expect(s.currentQuestion).toEqual(question)
   })
 
   it('setAnswerResult stores result and transitions to RESULT', () => {

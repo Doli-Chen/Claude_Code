@@ -25,6 +25,7 @@ export default defineConfig({
         'tests/**',
         '**/*.config.*',
         '**/node_modules/**',
+        'dist/**',
       ],
     },
   },

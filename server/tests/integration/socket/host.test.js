@@ -191,6 +191,35 @@ describe('Host socket handlers', () => {
     p.disconnect();
   }, 15000);
 
+  it('host:create_game_join replays already-joined players to reconnected host', async () => {
+    // Player joins before host disconnects
+    const playerClient = await connect();
+    const joined = waitFor(playerClient, 'player:join_success');
+    playerClient.emit('player:join', { gameCode, nickname: 'PreJoined' });
+    await joined;
+
+    // Host disconnects then reconnects
+    hostClient.disconnect();
+    const reconnectedHost = await connect();
+
+    // Collect all host:player_joined events sent during create_game_join
+    const receivedPlayers = [];
+    reconnectedHost.on('host:player_joined', (data) => {
+      receivedPlayers.push(data.player.nickname);
+    });
+
+    const gameCreated = waitFor(reconnectedHost, 'host:game_created');
+    reconnectedHost.emit('host:create_game_join', { gameCode });
+    await gameCreated;
+
+    await new Promise((r) => setTimeout(r, 200));
+    expect(receivedPlayers).toContain('PreJoined');
+
+    playerClient.disconnect();
+    reconnectedHost.disconnect();
+    hostClient = null;
+  }, 10000);
+
   it('host:create_game_join allows reconnected host to receive player_joined events', async () => {
     // Simulate host page navigation: disconnect original socket, reconnect as new socket
     hostClient.disconnect();

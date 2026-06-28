@@ -151,6 +151,47 @@ describe('GameSession - leaderboard', () => {
   });
 });
 
+describe('GameSession - edge cases', () => {
+  it('addPlayer returns FULL when 100 players already joined', () => {
+    const s = makeSession();
+    for (let i = 0; i < 100; i++) {
+      s.addPlayer(`socket-${i}`, `Player${i}`);
+    }
+    const result = s.addPlayer('extra-socket', 'Extra');
+    expect(result.error).toBe('FULL');
+  });
+
+  it('submitAnswer returns NOT_ANSWERING when state is not ANSWERING', () => {
+    const s = makeSession();
+    s.addPlayer('p1', 'Alice');
+    const result = s.submitAnswer('p1', 0);
+    expect(result.error).toBe('NOT_ANSWERING');
+  });
+
+  it('getPlayerRank returns 0 for unknown socket', () => {
+    const s = makeSession();
+    expect(s.getPlayerRank('nonexistent')).toBe(0);
+  });
+
+  it('answeredCount counts only players who have answered', () => {
+    const s = makeSession();
+    s.addPlayer('p1', 'Alice');
+    s.addPlayer('p2', 'Bob');
+    s.transition(STATES.QUESTION_INTRO);
+    s.currentQuestionIndex = 0;
+    s.questionEndTime = Date.now() + 20000;
+    s.transition(STATES.ANSWERING);
+    expect(s.answeredCount()).toBe(0);
+    s.submitAnswer('p1', 1);
+    expect(s.answeredCount()).toBe(1);
+  });
+
+  it('allAnswered returns false when no players in session', () => {
+    const s = makeSession();
+    expect(s.allAnswered()).toBe(false);
+  });
+});
+
 describe('GameSession - isLastQuestion', () => {
   it('returns true on last question', () => {
     const s = makeSession();

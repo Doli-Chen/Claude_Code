@@ -103,6 +103,40 @@ describe('Display socket handlers', () => {
     display.disconnect();
   }, 15000);
 
+  it('display:register while game in LEADERBOARD → receives display:leaderboard', async () => {
+    const player = await connect();
+    player.emit('player:join', { gameCode, nickname: 'P1' });
+    await waitFor(player, 'player:join_success');
+
+    hostClient.emit('host:start_game', { gameCode });
+    await waitFor(player, 'player:answering_start');
+    hostClient.emit('host:reveal_answer', { gameCode });
+    await waitFor(hostClient, 'host:question_timeout');
+    hostClient.emit('host:show_leaderboard', { gameCode });
+    await waitFor(player, 'player:leaderboard');
+
+    const display = await connect();
+    const leaderboard = waitFor(display, 'display:leaderboard');
+    display.emit('display:register', { gameCode });
+    const data = await leaderboard;
+    expect(Array.isArray(data.scores)).toBe(true);
+
+    player.disconnect();
+    display.disconnect();
+  }, 15000);
+
+  it('display:register while game in GAME_OVER → receives display:game_over', async () => {
+    hostClient.emit('host:end_game', { gameCode });
+
+    const display = await connect();
+    const gameOver = waitFor(display, 'display:game_over');
+    display.emit('display:register', { gameCode });
+    const data = await gameOver;
+    expect(Array.isArray(data.scores)).toBe(true);
+
+    display.disconnect();
+  }, 10000);
+
   it('display:register returns silently for unknown game code', async () => {
     const display = await connect();
     display.emit('display:register', { gameCode: 'XXXXXX' });

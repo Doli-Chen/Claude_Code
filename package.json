@@ -2,6 +2,7 @@
   "name": "bible-quiz",
   "version": "1.0.0",
   "scripts": {
+    "postinstall": "cd server && npm install && cd ../client && npm install",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "cd server && npm run dev",
     "dev:client": "wait-on tcp:3001 && cd client && npm run dev",

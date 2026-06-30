@@ -58,7 +58,7 @@ Routes / Socket handlers  →  Service layer  →  Repository layer  →  Data (
 
 - **Routes** (`src/routes/`): HTTP-only, thin wrappers that call `QuizService`
 - **Socket handlers** (`src/socket/`): Three files — `hostHandlers.js`, `playerHandlers.js`, `displayHandlers.js` — each registers events on one socket and delegates to `GameService`
-- **`QuizService`** (`src/services/QuizService.js`): Quiz CRUD business logic. Question validation: must have text or imageUrl, exactly 4 options, `correctIndex` 0–3, `timeLimit` from the allowed set. `createQuiz` initialises `lobbyImageUrl: null`; `updateQuiz` accepts `lobbyImageUrl` (string or null) to set the waiting-screen image.
+- **`QuizService`** (`src/services/QuizService.js`): Quiz CRUD business logic. Question validation: must have text or imageUrl, exactly 4 options, `correctIndex` 0–3, `timeLimit` from the allowed set. `createQuiz` initialises `lobbyImageUrl: null` and `defaultTimeLimit: 10`; `updateQuiz` accepts `lobbyImageUrl` (string or null) to set the waiting-screen image. `duplicateQuiz(id)` deep-copies the quiz with new UUIDs and appends `(複製)` to the title.
 - **`GameService`** (`src/services/GameService.js`): Owns the game loop — `createSession`, `startQuestion`, `beginAnswering`, `revealAnswer`, `showLeaderboard`, `nextQuestion`, `endGame`, `removeSession`, `getByCode`, `getById`. Stores all active sessions in a module-level `Map` (in-memory, lost on restart). `startQuestion` immediately calls `beginAnswering` synchronously, so `QUESTION_INTRO` is a transient state. `endGame` sets `session.state` directly instead of calling `transition()` — intentional escape hatch callable from any state.
 - **`GameSession`** (`src/models/GameSession.js`): The state machine. Enforces valid transitions via `VALID_TRANSITIONS`. Scoring is server-authoritative: `Math.max(1, Math.ceil((questionEndTime - Date.now()) / 1000))`, minimum 1 point.
 - **`QuizRepository`**: Reads/writes quiz JSON files from `server/data/quizzes/` (one file per quiz, named `{uuid}.json`).
@@ -154,7 +154,7 @@ Routes and their corresponding pages:
 
 | URL | Page | Role |
 |-----|------|------|
-| `/` | `HomePage` | Quiz selection / entry point |
+| `/` | `HomePage` | Quiz list — create, rename (click title to inline-edit), duplicate, delete, start game |
 | `/design`, `/design/:quizId` | `DesignPage` | Create/edit quizzes; sidebar has `ImageUploader` for `lobbyImageUrl` (waiting-screen image) |
 | `/host/:gameCode` | `HostPage` | Host controls during a game |
 | `/display/:gameCode` | `DisplayPage` | Projector/audience display |
@@ -173,10 +173,11 @@ Routes and their corresponding pages:
 All endpoints under `/api/`:
 
 - `GET /api/quizzes` — list all quizzes
-- `POST /api/quizzes` — create quiz (`{ title, description?, defaultTimeLimit? }`)
+- `POST /api/quizzes` — create quiz (`{ title, description?, defaultTimeLimit? }`); `defaultTimeLimit` defaults to 10
 - `GET /api/quizzes/:id` — get quiz by id
-- `PUT /api/quizzes/:id` — update quiz metadata
+- `PUT /api/quizzes/:id` — update quiz metadata (title, description, defaultTimeLimit, lobbyImageUrl)
 - `DELETE /api/quizzes/:id` — delete quiz
+- `POST /api/quizzes/:id/duplicate` — duplicate quiz (new UUIDs, title appended with `(複製)`)
 - `POST /api/quizzes/:id/questions` — add question
 - `PUT /api/quizzes/:id/questions/:idx` — update question by index
 - `DELETE /api/quizzes/:id/questions/:idx` — delete question by index
@@ -205,7 +206,7 @@ Frontend (`client/tests/`):
 - `integration/` — component and page render tests with React Testing Library + MSW
 - `e2e/` — Playwright tests (require `npm run dev` running)
 
-Backend coverage thresholds enforced by Jest: 80% branches, 85% functions/lines/statements. Frontend thresholds enforced by Vitest: 75% branches, 80% functions/lines/statements. Current counts: 135 backend tests, 220 frontend tests.
+Backend coverage thresholds enforced by Jest: 80% branches, 85% functions/lines/statements. Frontend thresholds enforced by Vitest: 75% branches, 80% functions/lines/statements. Current counts: 140 backend tests, 227 frontend tests.
 
 ### Production Deployment
 

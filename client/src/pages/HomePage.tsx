@@ -12,11 +12,47 @@ export default function HomePage() {
   const [creating, setCreating] = useState(false)
   const [displayCode, setDisplayCode] = useState('')
   const [newTitle, setNewTitle] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
 
   useEffect(() => {
     setLoading(true)
     quizApi.list().then(setQuizzes).finally(() => setLoading(false))
   }, [setQuizzes, setLoading])
+
+  async function handleDeleteQuiz(id: string) {
+    await quizApi.delete(id)
+    setQuizzes(quizzes.filter((q) => q.id !== id))
+    setDeletingId(null)
+  }
+
+  async function handleDuplicateQuiz(id: string) {
+    setDuplicatingId(id)
+    try {
+      const newQuiz = await quizApi.duplicate(id)
+      setQuizzes([
+        ...quizzes,
+        { id: newQuiz.id, title: newQuiz.title, questionCount: newQuiz.questions.length, updatedAt: newQuiz.updatedAt },
+      ])
+    } finally {
+      setDuplicatingId(null)
+    }
+  }
+
+  function startEditingTitle(quiz: QuizSummary) {
+    setEditingId(quiz.id)
+    setEditingTitle(quiz.title)
+  }
+
+  async function handleSaveTitle(id: string) {
+    const trimmed = editingTitle.trim()
+    setEditingId(null)
+    if (!trimmed || trimmed === quizzes.find((q) => q.id === id)?.title) return
+    await quizApi.update(id, { title: trimmed })
+    setQuizzes(quizzes.map((q) => (q.id === id ? { ...q, title: trimmed } : q)))
+  }
 
   async function handleCreateGame(quiz: QuizSummary) {
     socketService.disconnect()
@@ -81,22 +117,79 @@ export default function HomePage() {
             <div className="flex flex-col gap-3">
               {quizzes.map((q) => (
                 <div key={q.id} className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-900">{q.title}</h3>
+                  <div className="flex-1 min-w-0">
+                    {editingId === q.id ? (
+                      <input
+                        autoFocus
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onBlur={() => handleSaveTitle(q.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveTitle(q.id)
+                          if (e.key === 'Escape') setEditingId(null)
+                        }}
+                        className="w-full font-bold text-gray-900 border-b-2 border-indigo-400 focus:outline-none bg-transparent"
+                        aria-label="題庫名稱"
+                      />
+                    ) : (
+                      <h3
+                        className="font-bold text-gray-900 cursor-pointer hover:text-indigo-600 truncate"
+                        onClick={() => startEditingTitle(q)}
+                        title="點擊編輯名稱"
+                      >
+                        {q.title}
+                      </h3>
+                    )}
                     <p className="text-sm text-gray-500">{q.questionCount} 題</p>
                   </div>
-                  <button
-                    onClick={() => navigate(`/design/${q.id}`)}
-                    className="px-3 py-1.5 rounded-lg text-sm border border-indigo-300 text-indigo-600 hover:bg-indigo-50"
-                  >
-                    編輯
-                  </button>
-                  <button
-                    onClick={() => handleCreateGame(q)}
-                    className="px-3 py-1.5 rounded-lg text-sm bg-indigo-600 text-white hover:bg-indigo-700"
-                  >
-                    開始遊戲
-                  </button>
+                  {deletingId === q.id ? (
+                    <>
+                      <span className="text-sm text-red-600">確定刪除？</span>
+                      <button
+                        onClick={() => handleDeleteQuiz(q.id)}
+                        className="px-3 py-1.5 rounded-lg text-sm bg-red-500 text-white hover:bg-red-600"
+                        aria-label="確認刪除"
+                      >
+                        確認
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="px-3 py-1.5 rounded-lg text-sm border border-gray-300 text-gray-600 hover:bg-gray-50"
+                      >
+                        取消
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleDuplicateQuiz(q.id)}
+                        disabled={duplicatingId === q.id}
+                        className="px-3 py-1.5 rounded-lg text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+                        aria-label="複製題庫"
+                      >
+                        {duplicatingId === q.id ? '複製中...' : '複製'}
+                      </button>
+                      <button
+                        onClick={() => navigate(`/design/${q.id}`)}
+                        className="px-3 py-1.5 rounded-lg text-sm border border-indigo-300 text-indigo-600 hover:bg-indigo-50"
+                      >
+                        編輯
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(q.id)}
+                        className="px-3 py-1.5 rounded-lg text-sm border border-red-300 text-red-500 hover:bg-red-50"
+                        aria-label="刪除題庫"
+                      >
+                        刪除
+                      </button>
+                      <button
+                        onClick={() => handleCreateGame(q)}
+                        className="px-3 py-1.5 rounded-lg text-sm bg-indigo-600 text-white hover:bg-indigo-700"
+                      >
+                        開始遊戲
+                      </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>

@@ -135,6 +135,15 @@ describe('Quiz API', () => {
     expect(res.status).toBe(400);
   });
 
+  it('POST /api/quizzes/:id/duplicate - duplicates the quiz', async () => {
+    const res = await request(app).post(`/api/quizzes/${createdId}/duplicate`);
+    expect(res.status).toBe(201);
+    expect(res.body.title).toBe('Updated Title (複製)');
+    expect(res.body.id).not.toBe(createdId);
+    // clean up the duplicate
+    await request(app).delete(`/api/quizzes/${res.body.id}`);
+  });
+
   it('DELETE /api/quizzes/:id - deletes the quiz', async () => {
     const res = await request(app).delete(`/api/quizzes/${createdId}`);
     expect(res.status).toBe(204);

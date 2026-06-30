@@ -44,6 +44,10 @@ export const handlers = [
 
   http.delete('/api/quizzes/:id', () => new HttpResponse(null, { status: 204 })),
 
+  http.post('/api/quizzes/:id/duplicate', () =>
+    HttpResponse.json({ ...sampleQuiz, id: 'dup-quiz', title: 'Test Quiz (複製)' }, { status: 201 })
+  ),
+
   http.post('/api/quizzes/:id/questions', async ({ request }) => {
     const body = await request.json() as object
     return HttpResponse.json({ ...sampleQuiz.questions[0], ...body, id: 'new-q' }, { status: 201 })

@@ -94,6 +94,77 @@ describe('HomePage', () => {
     expect(btn).toBeDisabled()
   })
 
+  it('clicking 刪除 shows confirm buttons', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+    await waitFor(() => screen.getByText('Test Quiz'))
+    await user.click(screen.getByRole('button', { name: '刪除題庫' }))
+    expect(screen.getByText('確定刪除？')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '確認刪除' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '取消' })).toBeInTheDocument()
+  })
+
+  it('clicking 取消 after 刪除 hides confirm', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+    await waitFor(() => screen.getByText('Test Quiz'))
+    await user.click(screen.getByRole('button', { name: '刪除題庫' }))
+    await user.click(screen.getByRole('button', { name: '取消' }))
+    expect(screen.queryByText('確定刪除？')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '刪除題庫' })).toBeInTheDocument()
+  })
+
+  it('confirming delete removes quiz from list', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+    await waitFor(() => screen.getByText('Test Quiz'))
+    await user.click(screen.getByRole('button', { name: '刪除題庫' }))
+    await user.click(screen.getByRole('button', { name: '確認刪除' }))
+    await waitFor(() => expect(screen.queryByText('Test Quiz')).not.toBeInTheDocument())
+  })
+
+  it('clicking 複製 adds duplicated quiz to list', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+    await waitFor(() => screen.getByText('Test Quiz'))
+    await user.click(screen.getByRole('button', { name: '複製題庫' }))
+    await waitFor(() => expect(screen.getByText('Test Quiz (複製)')).toBeInTheDocument())
+  })
+
+  it('clicking quiz title shows an input for rename', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+    await waitFor(() => screen.getByText('Test Quiz'))
+    await user.click(screen.getByText('Test Quiz'))
+    expect(screen.getByRole('textbox', { name: '題庫名稱' })).toBeInTheDocument()
+  })
+
+  it('pressing Escape cancels rename without saving', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+    await waitFor(() => screen.getByText('Test Quiz'))
+    await user.click(screen.getByText('Test Quiz'))
+    const input = screen.getByRole('textbox', { name: '題庫名稱' })
+    await user.clear(input)
+    await user.type(input, 'Should Not Save')
+    await user.keyboard('{Escape}')
+    expect(screen.getByText('Test Quiz')).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: '題庫名稱' })).not.toBeInTheDocument()
+  })
+
+  it('pressing Enter saves the new title', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+    await waitFor(() => screen.getByText('Test Quiz'))
+    await user.click(screen.getByText('Test Quiz'))
+    const input = screen.getByRole('textbox', { name: '題庫名稱' })
+    await user.clear(input)
+    await user.type(input, 'Renamed Quiz')
+    await user.keyboard('{Enter}')
+    await waitFor(() => expect(screen.getByText('Renamed Quiz')).toBeInTheDocument())
+    expect(screen.queryByRole('textbox', { name: '題庫名稱' })).not.toBeInTheDocument()
+  })
+
   it('clicking 開始遊戲 connects socket and calls createGame', async () => {
     const user = userEvent.setup()
     renderHomePage()

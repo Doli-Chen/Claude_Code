@@ -23,7 +23,7 @@ async function getQuiz(id) {
   return quiz;
 }
 
-async function createQuiz({ title, description = '', defaultTimeLimit = 20 }) {
+async function createQuiz({ title, description = '', defaultTimeLimit = 10 }) {
   if (!title?.trim()) throw Object.assign(new Error('title is required'), { status: 400 });
   const now = new Date().toISOString();
   const quiz = {
@@ -52,6 +52,22 @@ async function updateQuiz(id, updates) {
   if (updates.lobbyImageUrl !== undefined) quiz.lobbyImageUrl = updates.lobbyImageUrl;
   quiz.updatedAt = new Date().toISOString();
   return repo.save(quiz);
+}
+
+async function duplicateQuiz(id) {
+  const original = await getQuiz(id);
+  const now = new Date().toISOString();
+  const copy = {
+    id: uuidv4(),
+    title: `${original.title} (複製)`,
+    description: original.description,
+    defaultTimeLimit: original.defaultTimeLimit,
+    lobbyImageUrl: original.lobbyImageUrl ?? null,
+    createdAt: now,
+    updatedAt: now,
+    questions: original.questions.map((q) => ({ ...q, id: uuidv4() })),
+  };
+  return repo.save(copy);
 }
 
 async function deleteQuiz(id) {
@@ -122,6 +138,7 @@ module.exports = {
   getQuiz,
   createQuiz,
   updateQuiz,
+  duplicateQuiz,
   deleteQuiz,
   addQuestion,
   updateQuestion,

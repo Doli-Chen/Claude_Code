@@ -33,6 +33,8 @@ export const quizApi = {
 
   delete: (id: string) => request<void>(`${BASE}/${id}`, { method: 'DELETE' }),
 
+  duplicate: (id: string) => request<Quiz>(`${BASE}/${id}/duplicate`, { method: 'POST' }),
+
   addQuestion: (quizId: string, q: Omit<Question, 'id'>) =>
     request<Question>(`${BASE}/${quizId}/questions`, {
       method: 'POST',

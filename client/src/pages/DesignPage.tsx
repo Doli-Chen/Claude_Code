@@ -8,7 +8,7 @@ import { QuestionEditor } from '../components/design/QuestionEditor'
 import { ImageUploader } from '../components/design/ImageUploader'
 import type { Quiz, Question } from '../types/quiz'
 
-function emptyQuestion(defaultTimeLimit = 20): Omit<Question, 'id'> {
+function emptyQuestion(defaultTimeLimit = 10): Omit<Question, 'id'> {
   return {
     text: '',
     imageUrl: null,
@@ -69,7 +69,7 @@ export default function DesignPage() {
 
   function addQuestion() {
     if (!quiz || !quizId) return
-    setPendingQuestion(emptyQuestion(quiz.defaultTimeLimit))
+    setPendingQuestion(emptyQuestion())
     setSelectedIdx(quiz.questions.length)
   }
 

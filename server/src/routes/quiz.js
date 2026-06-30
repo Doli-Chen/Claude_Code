@@ -28,6 +28,11 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   res.status(204).end();
 }));
 
+router.post('/:id/duplicate', asyncHandler(async (req, res) => {
+  const quiz = await quizService.duplicateQuiz(req.params.id);
+  res.status(201).json(quiz);
+}));
+
 router.post('/:id/questions', asyncHandler(async (req, res) => {
   const question = await quizService.addQuestion(req.params.id, req.body);
   res.status(201).json(question);

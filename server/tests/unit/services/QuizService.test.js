@@ -80,6 +80,43 @@ describe('getQuiz', () => {
   });
 });
 
+describe('duplicateQuiz', () => {
+  it('creates a copy with title appended with (複製)', async () => {
+    const quiz = { ...baseQuiz, title: 'Bible Quiz', questions: [] };
+    repo.findById.mockResolvedValue(quiz);
+    repo.save.mockImplementation((q) => Promise.resolve(q));
+    const result = await service.duplicateQuiz('q1');
+    expect(result.title).toBe('Bible Quiz (複製)');
+    expect(result.id).not.toBe('q1');
+  });
+
+  it('deep copies questions with new ids', async () => {
+    const quiz = {
+      ...baseQuiz,
+      questions: [{ id: 'orig-q', text: 'Q', options: [], correctIndex: 0, timeLimit: 20, imageUrl: null }],
+    };
+    repo.findById.mockResolvedValue(quiz);
+    repo.save.mockImplementation((q) => Promise.resolve(q));
+    const result = await service.duplicateQuiz('q1');
+    expect(result.questions).toHaveLength(1);
+    expect(result.questions[0].id).not.toBe('orig-q');
+    expect(result.questions[0].text).toBe('Q');
+  });
+
+  it('preserves lobbyImageUrl from original', async () => {
+    const quiz = { ...baseQuiz, lobbyImageUrl: '/uploads/banner.png' };
+    repo.findById.mockResolvedValue(quiz);
+    repo.save.mockImplementation((q) => Promise.resolve(q));
+    const result = await service.duplicateQuiz('q1');
+    expect(result.lobbyImageUrl).toBe('/uploads/banner.png');
+  });
+
+  it('throws 404 when original not found', async () => {
+    repo.findById.mockResolvedValue(null);
+    await expect(service.duplicateQuiz('missing')).rejects.toMatchObject({ status: 404 });
+  });
+});
+
 describe('deleteQuiz', () => {
   it('deletes successfully', async () => {
     repo.remove.mockResolvedValue(true);

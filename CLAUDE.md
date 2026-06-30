@@ -61,7 +61,7 @@ Routes / Socket handlers  →  Service layer  →  Repository layer  →  Data (
 - **`QuizService`** (`src/services/QuizService.js`): Quiz CRUD business logic. Question validation: must have text or imageUrl, exactly 4 options, `correctIndex` 0–3, `timeLimit` from the allowed set. `createQuiz` initialises `lobbyImageUrl: null` and `defaultTimeLimit: 10`; `updateQuiz` accepts `lobbyImageUrl` (string or null) to set the waiting-screen image. `duplicateQuiz(id)` deep-copies the quiz with new UUIDs and appends `(複製)` to the title.
 - **`GameService`** (`src/services/GameService.js`): Owns the game loop — `createSession`, `startQuestion`, `beginAnswering`, `revealAnswer`, `showLeaderboard`, `nextQuestion`, `endGame`, `removeSession`, `getByCode`, `getById`. Stores all active sessions in a module-level `Map` (in-memory, lost on restart). `startQuestion` immediately calls `beginAnswering` synchronously, so `QUESTION_INTRO` is a transient state. `endGame` sets `session.state` directly instead of calling `transition()` — intentional escape hatch callable from any state.
 - **`GameSession`** (`src/models/GameSession.js`): The state machine. Enforces valid transitions via `VALID_TRANSITIONS`. Scoring is server-authoritative: `Math.max(1, Math.ceil((questionEndTime - Date.now()) / 1000))`, minimum 1 point.
-- **`QuizRepository`**: Reads/writes quiz JSON files from `server/data/quizzes/` (one file per quiz, named `{uuid}.json`).
+- **`QuizRepository`**: Reads/writes quiz JSON files from `server/data/quizzes/` (one file per quiz, named `{uuid}.json`). `save()` uses atomic writes (write to `{id}.json.tmp`, then `fs.rename()`) to prevent corruption from concurrent requests. `findAll()` skips files that fail JSON.parse and logs them, so one corrupted file never blocks the whole list.
 
 ### Socket Room Naming
 
@@ -155,7 +155,7 @@ Routes and their corresponding pages:
 | URL | Page | Role |
 |-----|------|------|
 | `/` | `HomePage` | Quiz list — create, rename (click title to inline-edit), duplicate, delete, start game |
-| `/design`, `/design/:quizId` | `DesignPage` | Create/edit quizzes; sidebar has `ImageUploader` for `lobbyImageUrl` (waiting-screen image) |
+| `/design`, `/design/:quizId` | `DesignPage` | Create/edit quizzes; sidebar has `ImageUploader` for `lobbyImageUrl` (waiting-screen image). Existing question edits use a local `editingQuestion` state (updates immediately on every keystroke) and debounce the PUT call 600 ms to prevent concurrent file writes and stale-server-response UI glitches. |
 | `/host/:gameCode` | `HostPage` | Host controls during a game |
 | `/display/:gameCode` | `DisplayPage` | Projector/audience display |
 | `/play`, `/play/:gameCode` | `PlayerPage` | Player join and game flow |

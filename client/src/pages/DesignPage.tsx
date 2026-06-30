@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { DndContext, closestCenter } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable'
@@ -45,30 +45,59 @@ export default function DesignPage() {
   const [selectedIdx, setSelectedIdx] = useState(0)
   const [saving, setSaving] = useState(false)
   const [pendingQuestion, setPendingQuestion] = useState<Omit<Question, 'id'> | null>(null)
+  // Local state for the question being edited — updates immediately on every keystroke
+  // to avoid stale server data overwriting user input. Server sync is debounced below.
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingSaveRef = useRef<{ idx: number; q: Question } | null>(null)
+  const selectedIdxRef = useRef(selectedIdx)
+  useEffect(() => { selectedIdxRef.current = selectedIdx }, [selectedIdx])
 
   useEffect(() => {
     if (!quizId) return
-    quizApi.get(quizId).then(setQuiz).catch(() => navigate('/'))
+    quizApi.get(quizId)
+      .then((q) => {
+        setQuiz(q)
+        setEditingQuestion(q.questions[0] ?? null)
+      })
+      .catch(() => navigate('/'))
   }, [quizId, navigate])
 
-  const saveQuestion = useCallback(async (idx: number, updates: Partial<Question>) => {
-    if (!quiz || !quizId) return
+  const flushPendingSave = useCallback(async () => {
+    if (!pendingSaveRef.current || !quizId) return
+    const { idx, q } = pendingSaveRef.current
+    pendingSaveRef.current = null
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
     setSaving(true)
     try {
-      const updated = await quizApi.updateQuestion(quizId, idx, updates)
-      setQuiz((q) => {
-        if (!q) return q
-        const questions = [...q.questions]
+      const updated = await quizApi.updateQuestion(quizId, idx, q)
+      setQuiz((prev) => {
+        if (!prev) return prev
+        const questions = [...prev.questions]
         questions[idx] = updated
-        return { ...q, questions }
+        return { ...prev, questions }
       })
+      if (selectedIdxRef.current === idx) setEditingQuestion(updated)
     } finally {
       setSaving(false)
     }
-  }, [quiz, quizId])
+  }, [quizId])
+
+  function handleExistingQuestionChange(updates: Partial<Question>) {
+    if (!editingQuestion) return
+    const merged = { ...editingQuestion, ...updates }
+    setEditingQuestion(merged)
+    pendingSaveRef.current = { idx: selectedIdx, q: merged }
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(flushPendingSave, 600)
+  }
 
   function addQuestion() {
     if (!quiz || !quizId) return
+    flushPendingSave()
     setPendingQuestion(emptyQuestion())
     setSelectedIdx(quiz.questions.length)
   }
@@ -82,6 +111,7 @@ export default function DesignPage() {
       setQuiz((prev) => prev ? { ...prev, questions: [...prev.questions, saved] } : prev)
       setSelectedIdx(newIdx)
       setPendingQuestion(null)
+      setEditingQuestion(saved)
     } finally {
       setSaving(false)
     }
@@ -103,12 +133,16 @@ export default function DesignPage() {
     await quizApi.deleteQuestion(quizId, idx)
     const questions = quiz.questions.filter((_, i) => i !== idx)
     setQuiz({ ...quiz, questions })
-    setSelectedIdx(Math.min(idx, questions.length - 1))
+    const newIdx = Math.min(idx, questions.length - 1)
+    setSelectedIdx(newIdx)
+    setEditingQuestion(questions[newIdx] ?? null)
   }
 
   function handleSelectQuestion(idx: number) {
+    flushPendingSave()
     setPendingQuestion(null)
     setSelectedIdx(idx)
+    setEditingQuestion(quiz?.questions[idx] ?? null)
   }
 
   async function handleDragEnd(event: { active: { id: string }; over: { id: string } | null }) {
@@ -120,6 +154,7 @@ export default function DesignPage() {
     const reordered = await quizApi.reorderQuestions(quizId, oldIndex, newIndex)
     setQuiz(reordered)
     setSelectedIdx(newIndex)
+    setEditingQuestion(reordered.questions[newIndex])
   }
 
   if (!quiz) return <div className="p-8 text-gray-500">載入中...</div>
@@ -127,7 +162,7 @@ export default function DesignPage() {
   const isPending = pendingQuestion !== null && selectedIdx === quiz.questions.length
   const currentQ = isPending
     ? ({ ...pendingQuestion, id: '__pending__' } as Question)
-    : quiz.questions[selectedIdx]
+    : editingQuestion ?? quiz.questions[selectedIdx]
   const canSavePending = Boolean(pendingQuestion?.text || pendingQuestion?.imageUrl)
 
   return (
@@ -219,7 +254,7 @@ export default function DesignPage() {
                 onChange={
                   isPending
                     ? (updates) => setPendingQuestion((prev) => prev ? { ...prev, ...updates } : prev)
-                    : (updates) => saveQuestion(selectedIdx, updates)
+                    : handleExistingQuestionChange
                 }
               />
             </div>

@@ -49,7 +49,9 @@ async function findById(id) {
 async function save(quiz) {
   await ensureDir();
   const filePath = path.join(DATA_DIR, `${quiz.id}.json`);
-  await fs.writeFile(filePath, JSON.stringify(quiz, null, 2), 'utf8');
+  const tmpPath = `${filePath}.tmp`;
+  await fs.writeFile(tmpPath, JSON.stringify(quiz, null, 2), 'utf8');
+  await fs.rename(tmpPath, filePath);
   return quiz;
 }
 

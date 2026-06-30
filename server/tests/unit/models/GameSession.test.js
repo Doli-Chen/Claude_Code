@@ -64,6 +64,41 @@ describe('GameSession - players', () => {
   });
 });
 
+describe('GameSession - reconnectPlayer', () => {
+  it('moves player to new socketId', () => {
+    const s = makeSession();
+    s.addPlayer('old-id', 'Alice');
+    const result = s.reconnectPlayer('new-id', 'Alice');
+    expect(result.error).toBeUndefined();
+    expect(result.player.id).toBe('new-id');
+    expect(s.players.has('new-id')).toBe(true);
+    expect(s.players.has('old-id')).toBe(false);
+    expect(result.oldSocketId).toBe('old-id');
+  });
+
+  it('returns PLAYER_NOT_FOUND for unknown nickname', () => {
+    const s = makeSession();
+    const result = s.reconnectPlayer('new-id', 'Ghost');
+    expect(result.error).toBe('PLAYER_NOT_FOUND');
+  });
+
+  it('preserves player score and answers after reconnect', () => {
+    const s = makeSession();
+    s.addPlayer('p1', 'Alice');
+    s.transition(STATES.QUESTION_INTRO);
+    s.currentQuestionIndex = 0;
+    s.questionEndTime = Date.now() + 20000;
+    s.transition(STATES.ANSWERING);
+    s.submitAnswer('p1', 1); // correct answer
+    const scoreBefore = s.players.get('p1').score;
+
+    const result = s.reconnectPlayer('p1-new', 'Alice');
+    expect(result.error).toBeUndefined();
+    expect(s.players.get('p1-new').score).toBe(scoreBefore);
+    expect(s.players.get('p1-new').answers).toHaveLength(1);
+  });
+});
+
 describe('GameSession - answering', () => {
   function makeAnsweringSession() {
     const s = makeSession();

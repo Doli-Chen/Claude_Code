@@ -29,6 +29,7 @@ class GameSession {
     this.questionEndTime = null;
     this.timerInterval = null;
     this.players = new Map();
+    this.pendingRemovals = new Map(); // socketId → timeoutId (30s reconnection grace period)
     this.createdAt = Date.now();
   }
 
@@ -148,6 +149,18 @@ class GameSession {
 
   isLastQuestion() {
     return this.currentQuestionIndex >= this.quiz.questions.length - 1;
+  }
+
+  reconnectPlayer(newSocketId, nickname) {
+    for (const [oldSocketId, player] of this.players) {
+      if (player.nickname === nickname) {
+        this.players.delete(oldSocketId);
+        player.id = newSocketId;
+        this.players.set(newSocketId, player);
+        return { player, oldSocketId };
+      }
+    }
+    return { error: 'PLAYER_NOT_FOUND' };
   }
 
   clearTimer() {

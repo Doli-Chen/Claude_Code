@@ -39,7 +39,7 @@ export function QuestionSlide({ question, questionIndex, totalQuestions, timeRem
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 p-6">
         {question.imageUrl && (
-          <img src={question.imageUrl} alt="題目圖片" className="max-h-48 rounded-xl object-contain" />
+          <img src={question.imageUrl} alt="題目圖片" className="max-h-72 rounded-xl object-contain" />
         )}
         <h2 className="text-white text-3xl font-bold text-center max-w-3xl">{question.text}</h2>
       </div>
@@ -52,14 +52,21 @@ export function QuestionSlide({ question, questionIndex, totalQuestions, timeRem
             <div
               key={i}
               className={`
-                ${OPTION_COLORS[i]} rounded-xl p-8 min-h-32 flex items-center gap-3
+                ${OPTION_COLORS[i]} rounded-xl p-6 min-h-32 flex flex-col items-center justify-center gap-2
                 ${isWrong ? 'opacity-40' : ''}
                 ${isCorrect ? 'ring-4 ring-white' : ''}
               `}
             >
-              <span className="text-white text-4xl font-bold w-12">{OPTION_LABELS[i]}</span>
-              <span className="text-white text-3xl font-semibold">{opt.text}</span>
-              {isCorrect && <span className="ml-auto text-2xl">✓</span>}
+              <div className="flex items-center gap-3">
+                <span className="text-white text-4xl font-bold">{OPTION_LABELS[i]}</span>
+                {isCorrect && <span className="text-2xl">✓</span>}
+              </div>
+              {opt.imageUrl && (
+                <img src={opt.imageUrl} alt="" className="max-h-56 w-full object-contain rounded-lg" />
+              )}
+              {opt.text && (
+                <span className="text-white text-3xl font-semibold text-center">{opt.text}</span>
+              )}
             </div>
           )
         })}

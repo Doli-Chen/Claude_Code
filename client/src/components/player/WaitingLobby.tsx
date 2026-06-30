@@ -8,7 +8,7 @@ export function WaitingLobby({ nickname, quizTitle, lobbyImageUrl }: Props) {
       <motion.div
         animate={{ scale: [1, 1.1, 1] }}
         transition={{ repeat: Infinity, duration: 2 }}
-        className={lobbyImageUrl ? 'w-40 h-40' : 'text-6xl'}
+        className={lobbyImageUrl ? 'w-80 h-80' : 'text-6xl'}
       >
         {lobbyImageUrl ? (
           <img src={lobbyImageUrl} alt="等待畫面圖片" className="w-full h-full object-contain drop-shadow-lg" />

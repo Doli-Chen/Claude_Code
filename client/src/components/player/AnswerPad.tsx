@@ -75,11 +75,11 @@ export function AnswerPad({ question, questionIndex, totalQuestions, timeLimit, 
               <img
                 src={question.options[i].imageUrl ?? undefined}
                 alt=""
-                className="w-full max-h-16 object-contain rounded mt-1"
+                className="w-full max-h-28 object-contain rounded mt-1"
               />
             )}
             {question.options[i] && (
-              <span className="text-xl mt-1 text-center leading-tight">
+              <span className="text-2xl mt-1 text-center leading-tight">
                 {question.options[i].text}
               </span>
             )}

@@ -10,6 +10,8 @@ import { AnswerFeedback } from '../components/player/AnswerFeedback'
 import { RankView } from '../components/player/RankView'
 import { FinalResult } from '../components/player/FinalResult'
 
+const SESSION_KEY = 'quiz-player-session'
+
 export default function PlayerPage() {
   const { gameCode: codeFromUrl } = useParams<{ gameCode?: string }>()
   const store = usePlayerStore()
@@ -19,6 +21,7 @@ export default function PlayerPage() {
     socket.on('player:join_success', ({ gameCode, nickname, quizTitle, lobbyImageUrl }) => {
       setJoinError(null)
       store.setJoined(gameCode, nickname, quizTitle, lobbyImageUrl ?? null)
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ gameCode, nickname }))
     })
     socket.on('player:join_error', ({ code }) => {
       const messages: Record<string, string> = {
@@ -26,8 +29,11 @@ export default function PlayerPage() {
         NICKNAME_TAKEN: '暱稱已被使用',
         GAME_STARTED: '遊戲已開始',
         FULL: '遊戲已滿',
+        PLAYER_NOT_FOUND: '重新連線超時，請重新加入',
       }
       setJoinError(messages[code] ?? '加入失敗')
+      sessionStorage.removeItem(SESSION_KEY)
+      store.reset()
     })
     socket.on('player:question_ready', ({ questionIndex, totalQuestions, timeLimit, question }) => {
       store.setQuestionReady(questionIndex, totalQuestions, timeLimit, question)
@@ -44,11 +50,36 @@ export default function PlayerPage() {
     socket.on('player:game_over', ({ finalRank, finalScore, top5 }) => {
       store.setLeaderboard(finalRank, finalScore, top5)
       store.setState('GAME_OVER')
+      sessionStorage.removeItem(SESSION_KEY)
     })
     socket.on('player:kicked', () => {
       store.reset()
       setJoinError('你已被主持人移除')
+      sessionStorage.removeItem(SESSION_KEY)
     })
+
+    // On socket reconnect (mid-game network drop without page reload), re-emit player:rejoin
+    function handleReconnect() {
+      const { state, gameCode, nickname } = usePlayerStore.getState()
+      if (state !== 'JOIN' && gameCode && nickname) {
+        socket.emit('player:rejoin', { gameCode, nickname })
+      }
+    }
+    socket.on('connect', handleReconnect)
+
+    // On mount: auto-rejoin from sessionStorage (handles Android tab discard / page reload)
+    const stored = sessionStorage.getItem(SESSION_KEY)
+    if (stored) {
+      try {
+        const { gameCode: savedCode, nickname: savedNickname } = JSON.parse(stored)
+        if (savedCode && savedNickname) {
+          socketService.connect('player', savedCode)
+          socketService.rejoinGame(savedCode, savedNickname)
+        }
+      } catch {
+        sessionStorage.removeItem(SESSION_KEY)
+      }
+    }
 
     return () => {
       socket.off('player:join_success')
@@ -59,6 +90,7 @@ export default function PlayerPage() {
       socket.off('player:leaderboard')
       socket.off('player:game_over')
       socket.off('player:kicked')
+      socket.off('connect', handleReconnect)
       socketService.disconnect()
       store.reset()
     }

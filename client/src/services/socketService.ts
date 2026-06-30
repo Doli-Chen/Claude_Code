@@ -20,6 +20,7 @@ export const socketService = {
 
   // Player
   joinGame: (gameCode: string, nickname: string) => socket.emit('player:join', { gameCode, nickname }),
+  rejoinGame: (gameCode: string, nickname: string) => socket.emit('player:rejoin', { gameCode, nickname }),
   submitAnswer: (gameCode: string, answerIndex: number) =>
     socket.emit('player:submit_answer', { gameCode, answerIndex, clientTimestamp: Date.now() }),
 

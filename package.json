@@ -8,7 +8,7 @@
     "dev:client": "wait-on tcp:3001 && cd client && npm run dev",
     "build": "cd client && npm run build",
     "start": "cd server && npm start",
-    "test:all": "npm run test:server && npm run test:client",
+    "test:all": "cd client && npx tsc --noEmit && cd .. && npm run test:server && npm run test:client",
     "test:server": "cd server && npm test",
     "test:client": "cd client && npm test",
     "test:coverage:all": "npm run test:coverage:server && npm run test:coverage:client",

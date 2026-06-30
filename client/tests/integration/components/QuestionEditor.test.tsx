@@ -2,21 +2,9 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QuestionEditor } from '../../../src/components/design/QuestionEditor'
-import type { Question } from '../../../src/types/quiz'
+import { makeQuestion } from '../../helpers/factories'
 
-const baseQuestion: Question = {
-  id: 'q-1',
-  text: 'Who wrote Romans?',
-  imageUrl: null,
-  timeLimit: 20,
-  options: [
-    { index: 0, text: 'Peter', imageUrl: null },
-    { index: 1, text: 'Paul', imageUrl: null },
-    { index: 2, text: 'John', imageUrl: null },
-    { index: 3, text: 'James', imageUrl: null },
-  ],
-  correctIndex: 1,
-}
+const baseQuestion = makeQuestion()
 
 describe('QuestionEditor', () => {
   it('renders question text and all 4 options', () => {
@@ -91,15 +79,14 @@ describe('QuestionEditor', () => {
 
   it('calls onChange with null option imageUrl after removing option image', async () => {
     const onChange = vi.fn()
-    const questionWithOptionImage = {
-      ...baseQuestion,
+    const questionWithOptionImage = makeQuestion({
       options: [
         { index: 0, text: 'Peter', imageUrl: '/uploads/existing.png' },
         { index: 1, text: 'Paul', imageUrl: null },
         { index: 2, text: 'John', imageUrl: null },
         { index: 3, text: 'James', imageUrl: null },
       ],
-    }
+    })
     render(<QuestionEditor question={questionWithOptionImage} onChange={onChange} />)
     await userEvent.setup().click(screen.getAllByLabelText('移除圖片')[0])
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({

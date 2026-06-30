@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useQuizStore } from '../../../src/store/quizStore'
+import { makeQuiz } from '../../helpers/factories'
 
 beforeEach(() => {
   useQuizStore.setState({ quizzes: [], currentQuiz: null, loading: false, error: null })
@@ -23,10 +24,7 @@ describe('quizStore', () => {
   })
 
   it('setCurrentQuiz updates currentQuiz', () => {
-    const quiz = {
-      id: '1', title: 'Q', description: '', defaultTimeLimit: 20,
-      createdAt: '', updatedAt: '', questions: []
-    }
+    const quiz = makeQuiz({ id: '1', title: 'Q' })
     useQuizStore.getState().setCurrentQuiz(quiz)
     expect(useQuizStore.getState().currentQuiz?.id).toBe('1')
   })

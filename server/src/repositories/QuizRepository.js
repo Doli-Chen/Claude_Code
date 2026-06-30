@@ -10,21 +10,28 @@ async function ensureDir() {
 async function findAll() {
   await ensureDir();
   const files = await fs.readdir(DATA_DIR);
-  const quizzes = await Promise.all(
+  const results = await Promise.all(
     files
       .filter((f) => f.endsWith('.json'))
       .map(async (f) => {
-        const raw = await fs.readFile(path.join(DATA_DIR, f), 'utf8');
-        const quiz = JSON.parse(raw);
-        return {
-          id: quiz.id,
-          title: quiz.title,
-          questionCount: quiz.questions?.length ?? 0,
-          updatedAt: quiz.updatedAt,
-        };
+        try {
+          const raw = await fs.readFile(path.join(DATA_DIR, f), 'utf8');
+          const quiz = JSON.parse(raw);
+          return {
+            id: quiz.id,
+            title: quiz.title,
+            questionCount: quiz.questions?.length ?? 0,
+            updatedAt: quiz.updatedAt,
+          };
+        } catch {
+          console.error(`[QuizRepository] 跳過損壞的檔案：${f}`);
+          return null;
+        }
       })
   );
-  return quizzes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  return results
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 }
 
 async function findById(id) {

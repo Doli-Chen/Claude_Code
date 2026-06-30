@@ -191,4 +191,24 @@ describe('HostPage', () => {
     mockSocket.emit_event('display:leaderboard', { scores: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 100 }] })
     await waitFor(() => expect(screen.getByText('Alice')).toBeInTheDocument())
   })
+
+  it('handles host:game_created socket event', async () => {
+    renderHostPage()
+    mockSocket.emit_event('host:game_created', { gameCode: 'ABC123', quizTitle: 'My Bible Quiz', totalQuestions: 10 })
+    await waitFor(() => expect(screen.getByText('My Bible Quiz')).toBeInTheDocument())
+  })
+
+  it('handles display:game_over socket event', async () => {
+    useHostStore.setState({ state: 'ANSWERING', currentQuestionIndex: 0, totalQuestions: 5, answeredCount: 0, totalPlayers: 3 } as never)
+    renderHostPage()
+    mockSocket.emit_event('display:game_over', { scores: [{ rank: 1, nicknames: ['Winner'], total: 1, score: 200 }] })
+    await waitFor(() => expect(screen.getByText('🎉 遊戲結束')).toBeInTheDocument())
+  })
+
+  it('handles display:question_start socket event', async () => {
+    useHostStore.setState({ state: 'LOBBY', players: [], totalPlayers: 5, totalQuestions: 10 } as never)
+    renderHostPage()
+    mockSocket.emit_event('display:question_start', { questionIndex: 2 })
+    await waitFor(() => expect(screen.getByText('第 3 / 10 題')).toBeInTheDocument())
+  })
 })

@@ -6,6 +6,7 @@ interface PlayerStore {
   gameCode: string
   nickname: string
   quizTitle: string
+  lobbyImageUrl: string | null
   questionIndex: number
   totalQuestions: number
   timeLimit: number
@@ -15,7 +16,7 @@ interface PlayerStore {
   myScore: number
   top5: ScoreEntry[]
   setState: (s: PlayerState) => void
-  setJoined: (gameCode: string, nickname: string, quizTitle: string) => void
+  setJoined: (gameCode: string, nickname: string, quizTitle: string, lobbyImageUrl: string | null) => void
   setQuestionReady: (questionIndex: number, totalQuestions: number, timeLimit: number, question: DisplayQuestion) => void
   setAnswerResult: (result: AnswerResult) => void
   setLeaderboard: (myRank: number, myScore: number, top5: ScoreEntry[]) => void
@@ -27,6 +28,7 @@ const initial = {
   gameCode: '',
   nickname: '',
   quizTitle: '',
+  lobbyImageUrl: null as string | null,
   questionIndex: 0,
   totalQuestions: 0,
   timeLimit: 20,
@@ -40,8 +42,8 @@ const initial = {
 export const usePlayerStore = create<PlayerStore>((set) => ({
   ...initial,
   setState: (state) => set({ state }),
-  setJoined: (gameCode, nickname, quizTitle) =>
-    set({ gameCode, nickname, quizTitle, state: 'WAITING' }),
+  setJoined: (gameCode, nickname, quizTitle, lobbyImageUrl) =>
+    set({ gameCode, nickname, quizTitle, lobbyImageUrl, state: 'WAITING' }),
   setQuestionReady: (questionIndex, totalQuestions, timeLimit, question) =>
     set({ questionIndex, totalQuestions, timeLimit, currentQuestion: question, state: 'ANSWERING' }),
   setAnswerResult: (result) => set({ lastResult: result, state: 'RESULT' }),

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { socketService } from '../../../src/services/socketService'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import PlayerPage from '../../../src/pages/PlayerPage'
 import { usePlayerStore } from '../../../src/store/playerStore'
@@ -78,13 +79,13 @@ describe('PlayerPage', () => {
 
   it('shows WaitingLobby after join success', async () => {
     renderPlayerPage()
-    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Bible Quiz' })
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Bible Quiz', lobbyImageUrl: null })
     await waitFor(() => expect(screen.getByText('Alice')).toBeInTheDocument())
   })
 
   it('shows AnswerPad immediately when question_ready received', async () => {
     renderPlayerPage()
-    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz', lobbyImageUrl: null })
     mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一', imageUrl: null }, { text: '選項二', imageUrl: null }, { text: '選項三', imageUrl: null }, { text: '選項四', imageUrl: null }] } })
     await waitFor(() => expect(screen.getByLabelText('選項 A')).toBeInTheDocument())
   })
@@ -92,7 +93,7 @@ describe('PlayerPage', () => {
   it('shows 已作答 status and keeps AnswerPad visible after answer submitted', async () => {
     const user = userEvent.setup()
     renderPlayerPage()
-    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz', lobbyImageUrl: null })
     mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一', imageUrl: null }, { text: '選項二', imageUrl: null }, { text: '選項三', imageUrl: null }, { text: '選項四', imageUrl: null }] } })
     await waitFor(() => screen.getByLabelText('選項 A'))
     await user.click(screen.getByLabelText('選項 A'))
@@ -102,7 +103,7 @@ describe('PlayerPage', () => {
 
   it('shows AnswerFeedback after player:answer_result', async () => {
     renderPlayerPage()
-    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz', lobbyImageUrl: null })
     mockSocket.emit('player:question_ready', { questionIndex: 0, totalQuestions: 5, timeLimit: 20, question: { text: '測試題目', imageUrl: null, options: [{ text: '選項一', imageUrl: null }, { text: '選項二', imageUrl: null }, { text: '選項三', imageUrl: null }, { text: '選項四', imageUrl: null }] } })
     mockSocket.emit('player:answer_result', { correct: true, score: 15, totalScore: 15, rank: 1 })
     await waitFor(() => expect(screen.getByText('答對了！')).toBeInTheDocument())
@@ -110,23 +111,51 @@ describe('PlayerPage', () => {
 
   it('shows RankView after player:leaderboard', async () => {
     renderPlayerPage()
-    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz', lobbyImageUrl: null })
     mockSocket.emit('player:leaderboard', { myRank: 1, myScore: 15, top5: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 15 }] })
     await waitFor(() => expect(screen.getByText('第 1 名')).toBeInTheDocument())
   })
 
   it('shows FinalResult after player:game_over', async () => {
     renderPlayerPage()
-    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz', lobbyImageUrl: null })
     mockSocket.emit('player:game_over', { finalRank: 1, finalScore: 50, top5: [{ rank: 1, nicknames: ['Alice'], total: 1, score: 50 }] })
     await waitFor(() => expect(screen.getByText('遊戲結束！')).toBeInTheDocument())
   })
 
   it('resets to JoinForm on player:kicked', async () => {
     renderPlayerPage()
-    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz' })
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz', lobbyImageUrl: null })
     await waitFor(() => screen.getByText('Alice'))
     mockSocket.emit('player:kicked', {})
     await waitFor(() => expect(screen.getByText('你已被主持人移除')).toBeInTheDocument())
+  })
+
+  it('shows custom lobby image in WaitingLobby when lobbyImageUrl is set', async () => {
+    renderPlayerPage()
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz', lobbyImageUrl: '/uploads/banner.png' })
+    await waitFor(() => {
+      const img = screen.getByAltText('等待畫面圖片')
+      expect(img).toBeInTheDocument()
+      expect(img).toHaveAttribute('src', '/uploads/banner.png')
+    })
+  })
+
+  it('shows cross emoji in WaitingLobby when lobbyImageUrl is null', async () => {
+    renderPlayerPage()
+    mockSocket.emit('player:join_success', { gameCode: 'ABC123', nickname: 'Alice', quizTitle: 'Quiz', lobbyImageUrl: null })
+    await waitFor(() => {
+      expect(screen.queryByAltText('等待畫面圖片')).not.toBeInTheDocument()
+      expect(screen.getByText('✝️')).toBeInTheDocument()
+    })
+  })
+
+  it('submitting JoinForm calls socketService.connect and joinGame', async () => {
+    const user = userEvent.setup()
+    renderPlayerPage('ABC123')
+    await user.type(screen.getByLabelText('暱稱'), 'Alice')
+    await user.click(screen.getByRole('button', { name: '加入遊戲' }))
+    expect(socketService.connect).toHaveBeenCalledWith('player', 'ABC123')
+    expect(socketService.joinGame).toHaveBeenCalledWith('ABC123', 'Alice')
   })
 })

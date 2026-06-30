@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QuestionEditor } from '../../../src/components/design/QuestionEditor'
 import type { Question } from '../../../src/types/quiz'
@@ -69,5 +69,43 @@ describe('QuestionEditor', () => {
   it('renders an image uploader for the question and each of the 4 options', () => {
     render(<QuestionEditor question={baseQuestion} onChange={vi.fn()} />)
     expect(screen.getAllByLabelText('上傳圖片區域')).toHaveLength(5)
+  })
+
+  it('calls onChange with updated option imageUrl after uploading to option slot', async () => {
+    const onChange = vi.fn()
+    const { container } = render(<QuestionEditor question={baseQuestion} onChange={onChange} />)
+    const fileInputs = container.querySelectorAll('input[type="file"]')
+    // index 0 is the question image input; index 1 is option A
+    const optionAInput = fileInputs[1] as HTMLInputElement
+    const file = new File(['img'], 'option-a.png', { type: 'image/png' })
+    Object.defineProperty(optionAInput, 'files', { value: [file], configurable: true })
+    fireEvent.change(optionAInput)
+    await waitFor(() => {
+      const calls = onChange.mock.calls
+      const optionCall = calls.find((c) =>
+        c[0]?.options?.some((o: { index: number; imageUrl: string | null }) => o.index === 0 && o.imageUrl === '/uploads/test.png')
+      )
+      expect(optionCall).toBeTruthy()
+    })
+  })
+
+  it('calls onChange with null option imageUrl after removing option image', async () => {
+    const onChange = vi.fn()
+    const questionWithOptionImage = {
+      ...baseQuestion,
+      options: [
+        { index: 0, text: 'Peter', imageUrl: '/uploads/existing.png' },
+        { index: 1, text: 'Paul', imageUrl: null },
+        { index: 2, text: 'John', imageUrl: null },
+        { index: 3, text: 'James', imageUrl: null },
+      ],
+    }
+    render(<QuestionEditor question={questionWithOptionImage} onChange={onChange} />)
+    await userEvent.setup().click(screen.getAllByLabelText('移除圖片')[0])
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      options: expect.arrayContaining([
+        expect.objectContaining({ index: 0, imageUrl: null }),
+      ]),
+    }))
   })
 })

@@ -16,9 +16,9 @@ export default function PlayerPage() {
   const [joinError, setJoinError] = useState<string | null>(null)
 
   useEffect(() => {
-    socket.on('player:join_success', ({ gameCode, nickname, quizTitle }) => {
+    socket.on('player:join_success', ({ gameCode, nickname, quizTitle, lobbyImageUrl }) => {
       setJoinError(null)
-      store.setJoined(gameCode, nickname, quizTitle)
+      store.setJoined(gameCode, nickname, quizTitle, lobbyImageUrl ?? null)
     })
     socket.on('player:join_error', ({ code }) => {
       const messages: Record<string, string> = {
@@ -74,13 +74,13 @@ export default function PlayerPage() {
     store.setState('ANSWERED')
   }
 
-  const { state, nickname, quizTitle, questionIndex, totalQuestions, timeLimit, currentQuestion, lastResult, myRank, myScore, top5 } = store
+  const { state, nickname, quizTitle, lobbyImageUrl, questionIndex, totalQuestions, timeLimit, currentQuestion, lastResult, myRank, myScore, top5 } = store
 
   if (state === 'JOIN') {
     return <JoinForm initialCode={codeFromUrl} onJoin={handleJoin} error={joinError} />
   }
   if (state === 'WAITING') {
-    return <WaitingLobby nickname={nickname} quizTitle={quizTitle} />
+    return <WaitingLobby nickname={nickname} quizTitle={quizTitle} lobbyImageUrl={lobbyImageUrl} />
   }
   if ((state === 'ANSWERING' || state === 'ANSWERED') && currentQuestion) {
     return <AnswerPad key={questionIndex} question={currentQuestion} questionIndex={questionIndex} totalQuestions={totalQuestions} timeLimit={timeLimit} onAnswer={handleAnswer} />

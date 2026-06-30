@@ -243,6 +243,30 @@ describe('Host socket handlers', () => {
     hostClient = null;
   }, 10000);
 
+  it('host:create_game_join with unknown gameCode emits host:error', async () => {
+    const stranger = await connect();
+    const error = waitFor(stranger, 'host:error');
+    stranger.emit('host:create_game_join', { gameCode: 'XXXXXX' });
+    const data = await error;
+    expect(data.message).toMatch(/not found/i);
+    stranger.disconnect();
+  }, 10000);
+
+  it('host:reveal_answer in non-ANSWERING state is silently ignored', async () => {
+    hostClient.emit('host:reveal_answer', { gameCode });
+    await new Promise((r) => setTimeout(r, 200));
+  }, 10000);
+
+  it('host:show_leaderboard in non-REVEALING_ANSWER state is silently ignored', async () => {
+    hostClient.emit('host:show_leaderboard', { gameCode });
+    await new Promise((r) => setTimeout(r, 200));
+  }, 10000);
+
+  it('host:next_question in non-LEADERBOARD state is silently ignored', async () => {
+    hostClient.emit('host:next_question', { gameCode });
+    await new Promise((r) => setTimeout(r, 200));
+  }, 10000);
+
   it('host:end_game ends the session for all players', async () => {
     const playerClient = await connect();
     const joined = waitFor(playerClient, 'player:join_success');

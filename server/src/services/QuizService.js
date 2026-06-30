@@ -31,6 +31,7 @@ async function createQuiz({ title, description = '', defaultTimeLimit = 20 }) {
     title: title.trim(),
     description,
     defaultTimeLimit,
+    lobbyImageUrl: null,
     createdAt: now,
     updatedAt: now,
     questions: [],
@@ -48,6 +49,7 @@ async function updateQuiz(id, updates) {
     }
     quiz.defaultTimeLimit = updates.defaultTimeLimit;
   }
+  if (updates.lobbyImageUrl !== undefined) quiz.lobbyImageUrl = updates.lobbyImageUrl;
   quiz.updatedAt = new Date().toISOString();
   return repo.save(quiz);
 }

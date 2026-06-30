@@ -31,8 +31,38 @@ describe('createQuiz', () => {
     expect(saved.title).toBe('My Quiz');
   });
 
+  it('initialises lobbyImageUrl to null', async () => {
+    repo.save.mockResolvedValue({ ...baseQuiz });
+    await service.createQuiz({ title: 'My Quiz' });
+    const saved = repo.save.mock.calls[0][0];
+    expect(saved.lobbyImageUrl).toBeNull();
+  });
+
   it('throws 400 if title is empty', async () => {
     await expect(service.createQuiz({ title: '' })).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('updateQuiz', () => {
+  it('updates lobbyImageUrl', async () => {
+    repo.findById.mockResolvedValue({ ...baseQuiz });
+    repo.save.mockImplementation((q) => Promise.resolve(q));
+    const result = await service.updateQuiz('q1', { lobbyImageUrl: '/uploads/banner.png' });
+    expect(result.lobbyImageUrl).toBe('/uploads/banner.png');
+  });
+
+  it('clears lobbyImageUrl when set to null', async () => {
+    repo.findById.mockResolvedValue({ ...baseQuiz, lobbyImageUrl: '/uploads/old.png' });
+    repo.save.mockImplementation((q) => Promise.resolve(q));
+    const result = await service.updateQuiz('q1', { lobbyImageUrl: null });
+    expect(result.lobbyImageUrl).toBeNull();
+  });
+
+  it('does not change lobbyImageUrl when not in updates', async () => {
+    repo.findById.mockResolvedValue({ ...baseQuiz, lobbyImageUrl: '/uploads/keep.png' });
+    repo.save.mockImplementation((q) => Promise.resolve(q));
+    const result = await service.updateQuiz('q1', { title: 'New Title' });
+    expect(result.lobbyImageUrl).toBe('/uploads/keep.png');
   });
 });
 

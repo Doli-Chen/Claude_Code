@@ -5,6 +5,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from '@dnd-kit/utilities'
 import { quizApi } from '../services/quizApi'
 import { QuestionEditor } from '../components/design/QuestionEditor'
+import { ImageUploader } from '../components/design/ImageUploader'
 import type { Quiz, Question } from '../types/quiz'
 
 function emptyQuestion(defaultTimeLimit = 20): Omit<Question, 'id'> {
@@ -86,6 +87,17 @@ export default function DesignPage() {
     }
   }
 
+  async function handleLobbyImageUpdate(url: string | null) {
+    if (!quiz || !quizId) return
+    setSaving(true)
+    try {
+      await quizApi.update(quizId, { lobbyImageUrl: url })
+      setQuiz((q) => q ? { ...q, lobbyImageUrl: url } : q)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function deleteQuestion(idx: number) {
     if (!quiz || !quizId) return
     await quizApi.deleteQuestion(quizId, idx)
@@ -128,7 +140,7 @@ export default function DesignPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <aside className="w-56 bg-white border-r flex flex-col overflow-y-auto">
-          <div className="p-3 border-b">
+          <div className="p-3 border-b flex flex-col gap-3">
             <button
               onClick={addQuestion}
               disabled={quiz.questions.length >= 256 || isPending}
@@ -137,6 +149,14 @@ export default function DesignPage() {
             >
               + 新增題目
             </button>
+            <div role="region" aria-label="等待畫面圖片上傳">
+              <p className="text-xs font-medium text-gray-500 mb-1">等待畫面圖片</p>
+              <ImageUploader
+                imageUrl={quiz.lobbyImageUrl}
+                onUploaded={(url) => handleLobbyImageUpdate(url)}
+                onRemoved={() => handleLobbyImageUpdate(null)}
+              />
+            </div>
           </div>
           <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd as never}>
             <SortableContext items={quiz.questions.map((q) => q.id)} strategy={verticalListSortingStrategy}>

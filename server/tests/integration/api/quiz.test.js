@@ -89,6 +89,47 @@ describe('Quiz API', () => {
     expect(res.body.text).toBe('Test question');
   });
 
+  it('PUT /api/quizzes/:id/questions/:idx - updates a question', async () => {
+    const res = await request(app)
+      .put(`/api/quizzes/${createdId}/questions/0`)
+      .send({ text: 'Updated question text' });
+    expect(res.status).toBe(200);
+    expect(res.body.text).toBe('Updated question text');
+  });
+
+  it('POST /api/quizzes/:id/questions - adds a second question for reorder', async () => {
+    const res = await request(app)
+      .post(`/api/quizzes/${createdId}/questions`)
+      .send({
+        text: 'Second question',
+        options: [{ text: 'A' }, { text: 'B' }, { text: 'C' }, { text: 'D' }],
+        correctIndex: 1,
+        timeLimit: 15,
+      });
+    expect(res.status).toBe(201);
+  });
+
+  it('POST /api/quizzes/:id/questions/reorder - reorders questions', async () => {
+    const res = await request(app)
+      .post(`/api/quizzes/${createdId}/questions/reorder`)
+      .send({ fromIndex: 0, toIndex: 1 });
+    expect(res.status).toBe(200);
+    expect(res.body.questions[1].text).toBe('Updated question text');
+  });
+
+  it('DELETE /api/quizzes/:id/questions/:idx - deletes a question', async () => {
+    const res = await request(app)
+      .delete(`/api/quizzes/${createdId}/questions/0`);
+    expect(res.status).toBe(204);
+  });
+
+  it('PUT /api/quizzes/:id - 400 for invalid defaultTimeLimit', async () => {
+    const res = await request(app)
+      .put(`/api/quizzes/${createdId}`)
+      .send({ defaultTimeLimit: 99 });
+    expect(res.status).toBe(400);
+  });
+
   it('POST /api/quizzes - 400 for missing title', async () => {
     const res = await request(app).post('/api/quizzes').send({});
     expect(res.status).toBe(400);

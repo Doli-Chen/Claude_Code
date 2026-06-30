@@ -65,8 +65,9 @@ export function AnswerPad({ question, questionIndex, totalQuestions, timeLimit, 
             className={`
               ${opt.color} rounded-2xl flex flex-col items-center justify-center
               text-white p-3 min-h-24
-              disabled:opacity-50 transition-all active:scale-95
-              ${answered === i ? 'ring-4 ring-white' : ''}
+              transition-all active:scale-95
+              ${answered !== null && answered !== i ? 'opacity-30' : ''}
+              ${answered === i ? 'ring-[6px] ring-white scale-105 brightness-110' : ''}
             `}
           >
             <span className="text-3xl font-bold">{opt.label}</span>

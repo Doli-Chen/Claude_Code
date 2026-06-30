@@ -190,6 +190,46 @@ describe('GameSession - edge cases', () => {
     const s = makeSession();
     expect(s.allAnswered()).toBe(false);
   });
+
+  it('allAnswered returns true when all players have answered', () => {
+    const s = makeSession();
+    s.addPlayer('p1', 'Alice');
+    s.addPlayer('p2', 'Bob');
+    s.transition(STATES.QUESTION_INTRO);
+    s.currentQuestionIndex = 0;
+    s.questionEndTime = Date.now() + 20000;
+    s.transition(STATES.ANSWERING);
+    s.submitAnswer('p1', 1);
+    s.submitAnswer('p2', 0);
+    expect(s.allAnswered()).toBe(true);
+  });
+
+  it('canTransition returns false for unknown state', () => {
+    const s = makeSession();
+    s.state = 'NONEXISTENT_STATE';
+    expect(s.canTransition('LOBBY')).toBe(false);
+  });
+
+  it('getLeaderboard uses default top 5 and returns at most 5 entries', () => {
+    const s = makeSession();
+    for (let i = 0; i < 7; i++) {
+      s.addPlayer(`socket-${i}`, `Player${i}`);
+      s.players.get(`socket-${i}`).score = (i + 1) * 10;
+    }
+    const result = s.getLeaderboard();
+    expect(result).toHaveLength(5);
+    expect(result[0].score).toBe(70);
+  });
+
+  it('getPlayerRank returns correct rank when other players have higher scores', () => {
+    const s = makeSession();
+    s.addPlayer('p1', 'Alice');
+    s.addPlayer('p2', 'Bob');
+    s.players.get('p1').score = 10;
+    s.players.get('p2').score = 20;
+    expect(s.getPlayerRank('p1')).toBe(2);
+    expect(s.getPlayerRank('p2')).toBe(1);
+  });
 });
 
 describe('GameSession - isLastQuestion', () => {

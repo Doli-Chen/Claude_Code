@@ -9,11 +9,21 @@ describe('playerStore', () => {
   })
 
   it('setJoined transitions to WAITING', () => {
-    usePlayerStore.getState().setJoined('GAME1', 'Alice', 'Bible Quiz')
+    usePlayerStore.getState().setJoined('GAME1', 'Alice', 'Bible Quiz', null)
     const s = usePlayerStore.getState()
     expect(s.state).toBe('WAITING')
     expect(s.nickname).toBe('Alice')
     expect(s.gameCode).toBe('GAME1')
+  })
+
+  it('setJoined stores lobbyImageUrl', () => {
+    usePlayerStore.getState().setJoined('GAME1', 'Alice', 'Bible Quiz', '/uploads/cross.png')
+    expect(usePlayerStore.getState().lobbyImageUrl).toBe('/uploads/cross.png')
+  })
+
+  it('setJoined stores null lobbyImageUrl when not provided', () => {
+    usePlayerStore.getState().setJoined('GAME1', 'Alice', 'Bible Quiz', null)
+    expect(usePlayerStore.getState().lobbyImageUrl).toBeNull()
   })
 
   it('setQuestionReady transitions to ANSWERING (immediate)', () => {
@@ -54,7 +64,7 @@ describe('playerStore', () => {
   })
 
   it('reset returns to initial state', () => {
-    usePlayerStore.getState().setJoined('GAME1', 'Alice', 'Quiz')
+    usePlayerStore.getState().setJoined('GAME1', 'Alice', 'Quiz', null)
     usePlayerStore.getState().reset()
     expect(usePlayerStore.getState().state).toBe('JOIN')
     expect(usePlayerStore.getState().nickname).toBe('')

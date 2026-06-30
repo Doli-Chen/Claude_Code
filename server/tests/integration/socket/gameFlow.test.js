@@ -67,6 +67,9 @@ describe('Game flow integration', () => {
     playerClient.emit('player:join', { gameCode, nickname: 'TestPlayer' });
     const data = await joined;
     expect(data.nickname).toBe('TestPlayer');
+    expect(data.quizTitle).toBe(sampleQuiz.title);
+    expect(Object.prototype.hasOwnProperty.call(data, 'lobbyImageUrl')).toBe(true);
+    expect(data.lobbyImageUrl).toBeNull();
   });
 
   it('player gets error for duplicate nickname', async () => {

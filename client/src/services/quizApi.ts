@@ -24,7 +24,7 @@ export const quizApi = {
       body: JSON.stringify(data),
     }),
 
-  update: (id: string, data: Partial<{ title: string; description: string; defaultTimeLimit: number }>) =>
+  update: (id: string, data: Partial<{ title: string; description: string; defaultTimeLimit: number; lobbyImageUrl: string | null }>) =>
     request<Quiz>(`${BASE}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

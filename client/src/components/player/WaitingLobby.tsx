@@ -1,16 +1,20 @@
 import { motion } from 'framer-motion'
 
-interface Props { nickname: string; quizTitle: string }
+interface Props { nickname: string; quizTitle: string; lobbyImageUrl: string | null }
 
-export function WaitingLobby({ nickname, quizTitle }: Props) {
+export function WaitingLobby({ nickname, quizTitle, lobbyImageUrl }: Props) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-purple-900 flex flex-col items-center justify-center gap-6 p-6">
       <motion.div
         animate={{ scale: [1, 1.1, 1] }}
         transition={{ repeat: Infinity, duration: 2 }}
-        className="text-6xl"
+        className={lobbyImageUrl ? 'w-40 h-40' : 'text-6xl'}
       >
-        ✝️
+        {lobbyImageUrl ? (
+          <img src={lobbyImageUrl} alt="等待畫面圖片" className="w-full h-full object-contain drop-shadow-lg" />
+        ) : (
+          '✝️'
+        )}
       </motion.div>
       <h2 className="text-white text-3xl font-bold text-center">{quizTitle}</h2>
       <div className="bg-white/10 rounded-2xl px-8 py-4 text-center">

@@ -58,7 +58,7 @@ Routes / Socket handlers  →  Service layer  →  Repository layer  →  Data (
 
 - **Routes** (`src/routes/`): HTTP-only, thin wrappers that call `QuizService`
 - **Socket handlers** (`src/socket/`): Three files — `hostHandlers.js`, `playerHandlers.js`, `displayHandlers.js` — each registers events on one socket and delegates to `GameService`
-- **`QuizService`** (`src/services/QuizService.js`): Quiz CRUD business logic. Question validation: must have text or imageUrl, exactly 4 options, `correctIndex` 0–3, `timeLimit` from the allowed set.
+- **`QuizService`** (`src/services/QuizService.js`): Quiz CRUD business logic. Question validation: must have text or imageUrl, exactly 4 options, `correctIndex` 0–3, `timeLimit` from the allowed set. `createQuiz` initialises `lobbyImageUrl: null`; `updateQuiz` accepts `lobbyImageUrl` (string or null) to set the waiting-screen image.
 - **`GameService`** (`src/services/GameService.js`): Owns the game loop — `createSession`, `startQuestion`, `beginAnswering`, `revealAnswer`, `showLeaderboard`, `nextQuestion`, `endGame`, `removeSession`, `getByCode`, `getById`. Stores all active sessions in a module-level `Map` (in-memory, lost on restart). `startQuestion` immediately calls `beginAnswering` synchronously, so `QUESTION_INTRO` is a transient state. `endGame` sets `session.state` directly instead of calling `transition()` — intentional escape hatch callable from any state.
 - **`GameSession`** (`src/models/GameSession.js`): The state machine. Enforces valid transitions via `VALID_TRANSITIONS`. Scoring is server-authoritative: `Math.max(1, Math.ceil((questionEndTime - Date.now()) / 1000))`, minimum 1 point.
 - **`QuizRepository`**: Reads/writes quiz JSON files from `server/data/quizzes/` (one file per quiz, named `{uuid}.json`).
@@ -102,7 +102,7 @@ Events are prefixed by receiver: `host:*`, `player:*`, `display:*`.
 | `host:answer_progress` | host | `{ answered, total }` |
 | `host:question_timeout` | host | `{ questionIndex }` — emitted by `revealAnswer()` in both timer-expiry and manual-reveal cases |
 | `host:error` | host | `{ message }` |
-| `player:join_success` | player | `{ playerId, nickname, gameCode, quizTitle }` |
+| `player:join_success` | player | `{ playerId, nickname, gameCode, quizTitle, lobbyImageUrl }` |
 | `player:join_error` | player | `{ code, message }` — codes: `GAME_NOT_FOUND`, `GAME_STARTED`, `NICKNAME_TAKEN`, `FULL` |
 | `player:question_ready` | all in game | `{ questionIndex, totalQuestions, timeLimit, question: { text, imageUrl, options } }` |
 | `player:answering_start` | all in game | `{}` |
@@ -139,7 +139,7 @@ State lives in `GameSession.state` on the server. The frontend stores mirror it 
 
 | State | Display screen | Host | Player |
 |-------|---------------|------|--------|
-| LOBBY | QR Code + quiz title | Player list + Start button | Nickname entry form |
+| LOBBY | QR Code + quiz title | Player list + Start button | Nickname entry form → after joining: WaitingLobby (shows `lobbyImageUrl` if set, otherwise ✝️ emoji) |
 | QUESTION_INTRO | Question text fades in (no timer) | Question preview | "Preparing…" |
 | ANSWERING | Question + SVG countdown ring (top-right, green→yellow→red) | Answered count progress | A/B/C/D color-block buttons + countdown ring (top-right, size=72); after answering, stays on same screen with selected option highlighted and "✓ 已作答" badge — no separate waiting screen |
 | REVEALING_ANSWER | Correct option highlighted + per-option bar chart | Show Leaderboard button | Correct/wrong + points earned |
@@ -155,13 +155,13 @@ Routes and their corresponding pages:
 | URL | Page | Role |
 |-----|------|------|
 | `/` | `HomePage` | Quiz selection / entry point |
-| `/design`, `/design/:quizId` | `DesignPage` | Create/edit quizzes |
+| `/design`, `/design/:quizId` | `DesignPage` | Create/edit quizzes; sidebar has `ImageUploader` for `lobbyImageUrl` (waiting-screen image) |
 | `/host/:gameCode` | `HostPage` | Host controls during a game |
 | `/display/:gameCode` | `DisplayPage` | Projector/audience display |
 | `/play`, `/play/:gameCode` | `PlayerPage` | Player join and game flow |
 
 - **Stores** (`src/store/`): `quizStore`, `hostStore`, `playerStore`, `displayStore` — one per role. Stores hold derived UI state only; the source of truth is the server.
-- **`PlayerState`** (`src/types/game.ts`): Defines 7 values (`JOIN`, `WAITING`, `QUESTION_READY`, `ANSWERING`, `ANSWERED`, `RESULT`, `LEADERBOARD`, `GAME_OVER`). `QUESTION_READY` is defined in the type but never set in practice — `setQuestionReady()` in `playerStore` transitions directly to `ANSWERING`. Actual flow: `JOIN → WAITING → ANSWERING → ANSWERED → RESULT → LEADERBOARD / GAME_OVER`. `PlayerPage` renders `AnswerPad` for both `ANSWERING` and `ANSWERED` states (no separate waiting screen); a `key={questionIndex}` prop ensures the component remounts fresh on each new question.
+- **`PlayerState`** (`src/types/game.ts`): Defines 7 values (`JOIN`, `WAITING`, `QUESTION_READY`, `ANSWERING`, `ANSWERED`, `RESULT`, `LEADERBOARD`, `GAME_OVER`). `QUESTION_READY` is defined in the type but never set in practice — `setQuestionReady()` in `playerStore` transitions directly to `ANSWERING`. Actual flow: `JOIN → WAITING → ANSWERING → ANSWERED → RESULT → LEADERBOARD / GAME_OVER`. `PlayerPage` renders `AnswerPad` for both `ANSWERING` and `ANSWERED` states (no separate waiting screen); a `key={questionIndex}` prop ensures the component remounts fresh on each new question. `playerStore` holds `lobbyImageUrl: string | null` (received from `player:join_success`), passed to `WaitingLobby`.
 - **`socketService`** (`src/services/socketService.ts`): Single thin wrapper around the shared `socket.ts` singleton. All socket emits go through here; all socket listeners are registered in pages/components via `useSocketEvents`. Before connecting, sets `socket.auth = { role, gameCode }`.
 - **`socket.ts`**: Created with `autoConnect: false` — must call `socketService.connect(role, gameCode)` before any events fire.
 - **`useSocketEvents`** (`src/hooks/useSocket.ts`): Registers/deregisters a map of `{ eventName: handler }` on mount/unmount. Has **no dependency array**, so it re-registers handlers on every render. Pass stable handler references (via `useCallback` or store methods) to avoid stale closures.
@@ -205,7 +205,7 @@ Frontend (`client/tests/`):
 - `integration/` — component and page render tests with React Testing Library + MSW
 - `e2e/` — Playwright tests (require `npm run dev` running)
 
-Backend coverage thresholds enforced by Jest: 80% branches, 85% functions/lines/statements.
+Backend coverage thresholds enforced by Jest: 80% branches, 85% functions/lines/statements. Frontend thresholds enforced by Vitest: 75% branches, 80% functions/lines/statements. Current counts: 135 backend tests, 220 frontend tests.
 
 ### Production Deployment
 

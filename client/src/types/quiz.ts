@@ -18,6 +18,7 @@ export interface Quiz {
   title: string
   description: string
   defaultTimeLimit: number
+  lobbyImageUrl: string | null
   createdAt: string
   updatedAt: string
   questions: Question[]

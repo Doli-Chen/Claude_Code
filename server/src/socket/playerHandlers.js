@@ -16,6 +16,7 @@ module.exports = function registerPlayerHandlers(socket, io) {
       nickname: result.player.nickname,
       gameCode,
       quizTitle: session.quiz.title,
+      lobbyImageUrl: session.quiz.lobbyImageUrl ?? null,
     });
 
     const playerCount = session.players.size;

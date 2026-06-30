@@ -1,10 +1,11 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { http, HttpResponse } from 'msw'
 import { server } from '../../mocks/server'
 import HomePage from '../../../src/pages/HomePage'
+import { socketService } from '../../../src/services/socketService'
 
 const mockSocket = vi.hoisted(() => ({
   auth: {} as Record<string, unknown>,
@@ -22,6 +23,8 @@ vi.mock('../../../src/services/socketService', () => ({
     createGame: vi.fn(),
   },
 }))
+
+beforeEach(() => { vi.clearAllMocks() })
 
 function renderHomePage() {
   return render(
@@ -89,5 +92,15 @@ describe('HomePage', () => {
     renderHomePage()
     const btn = screen.getByRole('button', { name: '開啟顯示' })
     expect(btn).toBeDisabled()
+  })
+
+  it('clicking 開始遊戲 connects socket and calls createGame', async () => {
+    const user = userEvent.setup()
+    renderHomePage()
+    await waitFor(() => screen.getByText('Test Quiz'))
+    await user.click(screen.getByRole('button', { name: '開始遊戲' }))
+    expect(mockSocket.connect).toHaveBeenCalled()
+    expect(mockSocket.once).toHaveBeenCalledWith('host:game_created', expect.any(Function))
+    expect(socketService.createGame).toHaveBeenCalledWith('quiz-1')
   })
 })
